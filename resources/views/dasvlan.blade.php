@@ -48,17 +48,17 @@
       <div class="card m-2" style="width: 20rem;">
         <a href="{{ route('vlan.show', $vlan->id) }}" class="text-decoration-none text-reset">
         <div class="card-body">
-           <h5 class="card-title">{{ $vlan->vlanid ?? '-' }} - {{ $vlan->vlan ?? '-' }}</h5>
-           <p class="mb-1"><strong>Domain:</strong>
-             @if($vlan->domain)
-               <a href="{{ route('domain.show', $vlan->domain) }}">{{ $domainName }}</a>
-             @else
-               {{ $domainName }}
-             @endif
-           </p>
-           <p class="mb-1"><strong>IP Range:</strong> {{ $ipRange }}</p>
-           <p class="mb-1"><strong>Block IP:</strong> {{ $vlan->block_ip ?? '-' }}</p>
-           <p class="mb-0"><strong>Gateway:</strong> {{ $vlan->gateway ?? '-' }}</p>
+          <h5 class="card-title">{{ $vlan->vlanid ?? '-' }} - {{ $vlan->vlan ?? '-' }}</h5>
+          <p class="mb-1"><strong>Domain:</strong>
+            @if($vlan->domain)
+              <a href="{{ route('domain.show', $vlan->domain) }}">{{ $domainName }}</a>
+          @else
+              {{ $domainName }}
+            @endif
+          </p>
+          {{-- <p class="mb-1"><strong>IP Range:</strong> {{ $ipRange }}</p> --}}
+          <p class="mb-1"><strong>Block IP:</strong> {{ $vlan->block_ip ?? '-' }}</p>
+          <p class="mb-0"><strong>Gateway:</strong> {{ $vlan->gateway ?? '-' }}</p>
         </div>
         </a>
       </div>

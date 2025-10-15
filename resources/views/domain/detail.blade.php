@@ -39,6 +39,7 @@
                 <thead>
                     <tr>
                         <th>No</th>
+                        <th>Domain</th>
                         <th>Device</th>
                         <th>IP</th>
                         <th>Vlan-ID</th>
@@ -68,6 +69,7 @@
                         @endphp
                         <tr class="{{ $rowClass }}">
                             <td>{{ (isset($data) && method_exists($data, 'currentPage')) ? (($data->currentPage() - 1) * $data->perPage() + $loop->iteration) : $loop->iteration }}</td>
+                            
                             <td>{{ $row->device ?? $row->Device ?? '-' }}</td>
                             <td>{{ $row->ip ?? $row->IP ?? '-' }}</td>
                             <td>{{ $row->vlanid ?? $row->VLANID ?? '-' }}</td>

@@ -6,6 +6,8 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\VlanController;
 use App\Http\Controllers\IpController;
+use App\Http\Controllers\CommandController;
+use App\Http\Controllers\GenerateController;
 
 
 // Route::get('/', function () {
@@ -54,3 +56,14 @@ Route::get('/ip/edit/{id}', [IpController::class, 'edit'])->name('ip.edit   ');
 Route::put('/ip/update/{id}', [IpController::class, 'update'])->name('ip.update');
 Route::post('/ip/destroy/{id}', [IpController::class, 'destroy'])->name('ip.destroy');
 Route::get('/ip/getVlanDetails/{vlanId}', [IpController::class, 'getVlanDetails'])->name('ip.getVlanDetails');
+Route::get('/ip/data', [IpController::class, 'data'])->name('ip.data');
+
+Route::get('/command', [CommandController::class, 'index'])->name('command.command');
+Route::get('/command/create', [CommandController::class, 'create'])->name('command.create');
+Route::post('/command/store', [CommandController::class, 'store'])->name('command.store');
+Route::get('/command/edit/{id}', [CommandController::class, 'edit'])->name('command.edit');
+Route::put('/command/update/{id}', [CommandController::class, 'update'])->name('command.update');
+Route::post('/command/destroy/{id}', [CommandController::class, 'destroy'])->name('command.destroy');
+
+
+Route::get('/generate', [GenerateController::class, 'index'])->name('generate.generate');

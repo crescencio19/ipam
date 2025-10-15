@@ -5,7 +5,7 @@
   class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
   id="layout-navbar"
 >
- <form action="{{ route('vlan.vlan') }}" method="GET" class="navbar-nav align-items-center">
+ <form action="{{ route('command.command') }}" method="GET" class="navbar-nav align-items-center">
   <div class="nav-item d-flex align-items-center">
     <i class="bx bx-search fs-4 lh-0"></i>
     <input
@@ -35,25 +35,24 @@
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Domain</th>
-                        <th>Vlan Id</th>
-                        <th>Vlan</th>
-                        <th>Gateway</th>
-                        <th>Block IP</th>
-                        {{-- <th>Actions</th> --}}
+                        <th>Ip</th>
+                        <th>Function</th>
+                        <th>Command</th>
+                        <th>Description</th>
+                        
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
-                    @foreach ($vlans as $item) 
+                    @foreach ($commands as $item) 
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                        
-                        <td>{{ $item->domainData->domain }}</td>
+                      <td>{{ $item->ipData->ip ?? 'N/A' }} - {{ $item->ipData->device ?? 'N/A' }}</td>
+                        <td>{{ $item->service_command }}</td>
+                        <td>{{ $item->command }}</td>
+                        <td>{{ $item->description }}</td>
 
-                         <td>{{$item->vlanid}}</td>
-                         <td>{{$item->vlan}}</td>
-                         <td>{{$item->gateway}}</td>
-                        <td>{{$item->block_ip}}</td>
+                        
                         <td>
                             <!-- Tombol Edit -->
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $item->id }}">
@@ -69,7 +68,7 @@
                  <!-- Modal Edit -->
 <div class="modal fade" id="editModal{{ $item->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $item->id }}" aria-hidden="true">
   <div class="modal-dialog">
-    <form action="{{ route('vlan.update', $item->id) }}" method="POST">
+    <form action="{{ route('command.update', $item->id) }}" method="POST">
       @csrf
       @method('PUT')
       <div class="modal-content">
@@ -79,13 +78,13 @@
         </div>
         <div class="modal-body">
               <div class="mb-3">
-                        <label for="domain" class="form-label">Domain</label>
-                         <select class="form-select"  name="domain" id="domain" aria-label="Default select example">
-                          <option selected="">Select Domain</option>
+                        <label for="ip" class="form-label">IP</label>
+                         <select class="form-select"  name="ip" id="ip" aria-label="Default select example">
+                          <option selected="">Select IP</option>
                          
-                            @foreach ($domains as $domain)
-                <option value="{{ $domain->id }}" {{ $item->domain == $domain->id ? 'selected' : '' }}>
-                  {{ $domain->domain }}
+                            @foreach ($ips as $ip)
+                <option value="{{ $ip->id }}" {{ $item->ip == $ip->id ? 'selected' : '' }}>
+                  {{ $ip->ip }}
                 </option>
               @endforeach
                         </select>
@@ -93,23 +92,26 @@
          
 
           <div class="mb-3">
-            <label class="form-label">VLAN</label>
-            <input type="text" name="vlan" class="form-control" value="{{ $item->vlan }}" required>
+            <label class="form-label">Service Command </label>
+            <input type="text" name="service_command" class="form-control" value="{{ $item->service_command }}" required>
           </div>
-          <div class="mb-3">
-            <label class="form-label">VLAN ID</label>
-            <input type="text" name="vlanid" class="form-control" value="{{ $item->vlanid }}" required>
-          </div>
+            <div>
+          <label for="exampleFormControlTextarea1" class="form-label">Command</label>
+                        <textarea class="form-control" name="command" id="exampleFormControlTextarea1" required rows="3" style="height: 98px;">{{ $item->command }}</textarea>
+
+                      </div>
+          
+          {{-- <div class="mb-3">
+            <label class="form-label">Command</label>
+            <input type="text" name="command" class="form-control" value="{{ $item->command }}" required>
+          </div> --}}
 
           <div class="mb-3">
-            <label class="form-label">Gateway</label>
-            <input type="text" name="gateway" class="form-control" value="{{ $item->gateway }}" required>
+            <label class="form-label">Description</label>
+            <input type="text" name="description" class="form-control" value="{{ $item->description }}" required>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Block IP</label>
-            <input type="text" name="block_ip" class="form-control" value="{{ $item->block_ip }}" required>
-          </div>
+          
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -119,10 +121,11 @@
     </form>
   </div>
 </div>
-                    <!-- Modal Delete Service (optional, jika ingin dinamis juga) -->
+
+                  <!-- Modal Delete Service (optional, jika ingin dinamis juga) -->
                     <div class="modal fade" id="deleteModal{{ $item->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $item->id }}" aria-hidden="true">
                         <div class="modal-dialog">
-                            <form action="{{ route('vlan.destroy', $item->id) }}" method="POST">
+                            <form action="{{ route('command.destroy', $item->id) }}" method="POST">
                                 @csrf
                                 <div class="modal-content">
                     <div class="modal-header">
@@ -150,7 +153,7 @@
                 </tbody>
             </table>
     <div class="col d-flex justify-content-end">
-        {{ $vlans->links('pagination::bootstrap-5') }}
+        {{ $commands->links('pagination::bootstrap-5') }}
     </div>
 
         </div>
@@ -160,42 +163,44 @@
     <!-- Modal Add Service -->
     <div class="modal fade" id="basicModal" tabindex="-1" aria-labelledby="basicModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <form action="{{ route('vlan.store') }}" method="POST">
+            <form action="{{ route('command.store') }}" method="POST">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="basicModalLabel">New Vlan</h5>
+                        <h5 class="modal-title" id="basicModalLabel">New Service Command</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                    
                     <div class="modal-body">
                         <div class="mb-3">
-                        <label for="domain" class="form-label">Domain</label>
-                         <select class="form-select"  name="domain" id="domain" aria-label="Default select example">
-                          <option selected="">Select Domain</option>
+                        <label for="ip" class="form-label">Ip</label>
+                         <select class="form-select"  name="ip" id="ip" aria-label="Default select example">
+                          <option selected="">Select ip</option>
                          
-                            @foreach($domains as $domain)
-                                <option value="{{ $domain->id}}">{{ $domain->domain }}</option>
+                            @foreach($ips as $ip)
+                                <option value="{{ $ip->id }}">{{ $ip->ip }} - {{ $ip->device }}</option>
                             @endforeach
                         </select>
                     </div>
                           <div class="mb-3">
-                            <label for="vlanid" class="form-label">Vlan Id</label>
-                            <input type="text" name="vlanid" id="vlanid" class="form-control" placeholder="vlanId" required>
+                            <label for="service_command" class="form-label">Service Command</label>
+                            <input type="text" name="service_command" id="service_command" class="form-control" placeholder="service command" required>
                         </div>
-                          <div class="mb-3">
-                            <label for="vlan" class="form-label">Vlan</label>
-                            <input type="text" name="vlan" id="vlan" class="form-control" placeholder="vlan" required>
-                        </div>
+
+                        <div>
+                        <label for="exampleFormControlTextarea1" class="form-label">Command</label>
+                        <textarea class="form-control" name="command" id="exampleFormControlTextarea1" placeholder="command" required rows="3" style="height: 98px;"></textarea>
+                        
+                      </div>
+                          
                              <div class="mb-3">
-                            <label for="block_ip" class="form-label">Block IP</label>
-                            <input type="text" name="block_ip" id="block_ip" class="form-control" placeholder="block ip" required>
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" name="description" id="description" class="form-control" placeholder="description" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="gateway" class="form-label">Gateway</label>
-                            <input type="text" name="gateway" id="gateway" class="form-control" placeholder="gateway " required>
-                        </div>
+                         
+                     
                     </div>
+                   
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                             Close

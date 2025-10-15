@@ -27,7 +27,7 @@
             <h5 class="mb-0">{{ $title }}</h5>
             
             <button type="button" class="btn rounded-pill btn-outline-primary" data-bs-toggle="modal" data-bs-target="#basicModal">
-                              <span class="tf-icons bx bx-plus"></span>&nbsp; Add 
+                            <span class="tf-icons bx bx-plus"></span>&nbsp; Add 
                             </button>
         </div>
         <div class="table-responsive text-nowrap">

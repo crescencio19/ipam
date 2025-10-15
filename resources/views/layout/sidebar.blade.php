@@ -80,10 +80,15 @@
                 <div data-i18n="Analytics">Vlans Range</div>
               </a>
             </li>
-
+            <li class="menu-item {{ Request::routeIs('generate.generate') ? 'active' : '' }}">
+              <a href="{{ route('generate.generate') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-command"></i>
+                <div data-i18n="Analytics">Generate Command</div>
+              </a>
+            </li>
             <!-- Data Master -->
             @php
-                $dataMasterActive = Request::routeIs('domain.domain') || Request::routeIs('service.service') || Request::routeIs('vlan.vlan') || Request::routeIs('ip.ip');
+                $dataMasterActive = Request::routeIs('domain.domain') || Request::routeIs('service.service') || Request::routeIs('vlan.vlan') || Request::routeIs('ip.ip') || Request::routeIs('command.command');
             @endphp
             <li class="menu-item {{ $dataMasterActive ? 'active open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -115,10 +120,14 @@
                             <div data-i18n="Container">IP Services</div>
                         </a>
                     </li>
+                    <li class="menu-item {{ Request::routeIs('command.command') ? 'active' : '' }}">
+                        <a href="{{ route('command.command') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-terminal"></i>
+                            <div data-i18n="Container">Command</div>
+                        </a>
+                    </li>
                         
                 </ul>
             </li>
-
-       
           </ul>
         </aside>
