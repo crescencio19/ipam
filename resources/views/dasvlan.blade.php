@@ -47,9 +47,9 @@
 
       <div class="card m-2" style="width: 20rem;">
         <a href="{{ route('vlan.show', $vlan->id) }}" class="text-decoration-none text-reset">
-        <div class="card-body">
-          <h5 class="card-title">{{ $vlan->vlanid ?? '-' }} - {{ $vlan->vlan ?? '-' }}</h5>
-          <p class="mb-1"><strong>Domain:</strong>
+         <div class="card-body">
+           <h5 class="card-title">{{ $vlan->vlanid ?? '-' }} - {{ $vlan->vlan ?? '-' }}</h5>
+           <p class="mb-1"><strong>Domain:</strong>
             @if($vlan->domain)
               <a href="{{ route('domain.show', $vlan->domain) }}">{{ $domainName }}</a>
           @else

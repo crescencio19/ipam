@@ -55,16 +55,24 @@ class CommandController extends Controller
             // 'description' => 'required',
         ]);
 
-        CommandModel::create([
-            'ip' => $request->ip,
-            'service_command' => $request->service_command,
-            'command' => $request->command,
-            'description' => $request->description,
-            'remark' => $request->remark,
-            'iby' => auth()->user()->username ?? null,
-            'idt' => now(),
-            'isdeleted' => 0,
-        ]);
+        // pastikan selalu array (mendukung single atau multiple)
+        $ips = $request->input('ip');
+        if (!is_array($ips)) {
+            $ips = [$ips];
+        }
+
+        foreach ($ips as $ipId) {
+            CommandModel::create([
+                'ip' => $ipId,
+                'service_command' => $request->service_command,
+                'command' => $request->command,
+                'description' => $request->description,
+                'remark' => $request->remark,
+                'iby' => auth()->user()->username ?? null,
+                'idt' => now(),
+                'isdeleted' => 0,
+            ]);
+        }
 
         return redirect()->route('command.command')->with('success', 'Command created successfully.');
     }
@@ -84,9 +92,17 @@ class CommandController extends Controller
             // 'description' => 'required',
         ]);
 
+        $ips = $request->input('ip');
+        if (!is_array($ips)) {
+            $ips = [$ips];
+        }
+
         $command = CommandModel::findOrFail($id);
+
+        // update record utama dengan IP pertama
+        $firstIp = array_shift($ips); // ambil IP pertama, sisanya untuk dibuat sebagai record baru
         $command->update([
-            'ip' => $request->ip,
+            'ip' => $firstIp,
             'service_command' => $request->service_command,
             'command' => $request->command,
             'description' => $request->description,
@@ -94,6 +110,20 @@ class CommandController extends Controller
             'uby' => auth()->user()->username ?? null,
             'udt' => now(),
         ]);
+
+        // buat record baru untuk IP tambahan (jika ada)
+        foreach ($ips as $ipId) {
+            CommandModel::create([
+                'ip' => $ipId,
+                'service_command' => $request->service_command,
+                'command' => $request->command,
+                'description' => $request->description,
+                'remark' => $request->remark,
+                'iby' => auth()->user()->username ?? null,
+                'idt' => now(),
+                'isdeleted' => 0,
+            ]);
+        }
 
         return redirect()->route('command.command')->with('success', 'Command updated successfully.');
     }

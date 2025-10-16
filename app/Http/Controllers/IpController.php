@@ -50,32 +50,32 @@ class IpController extends Controller
         $request->validate([
             'vlan' => 'required',
             'ip' => 'required',
-            'service' => 'required',
             'device' => 'required',
             'vlanid' => 'required',
-            // 'rack' => 'required',
-            // 'bandwith' => 'required',
-            // 'location' => 'required',
-
+            'service' => 'nullable|exists:tb_service,id', // <- tambahkan
         ]);
 
-        IpModel::create([
+        $payload = [
             'vlan' => $request->vlan,
             'ip' => $request->ip,
-            'service' => $request->service,
             'device' => $request->device,
             'vlanid' => $request->vlanid,
             'rack' => $request->rack,
             'bandwith' => $request->bandwith,
             'location' => $request->location,
-
-            // 'remark' => $request->remark,
-            // 'iby' => auth()->user()->name,
             'idt' => now(),
-        ]);
+        ];
+
+        // hanya set service jika tidak kosong
+        if ($request->filled('service') && $request->service !== '') {
+            $payload['service'] = $request->service;
+        }
+
+        IpModel::create($payload);
 
         return redirect()->route('ip.ip')->with('success', 'IP created successfully.');
     }
+
     public function edit($id)
     {
         $ip = IpModel::findOrFail($id);
@@ -83,32 +83,36 @@ class IpController extends Controller
         $services = ServiceModel::where('isdeleted', 0)->get();
         return view('ip.edit', compact('ip', 'vlans', 'services'));
     }
+
     public function update(Request $request, $id)
     {
         $request->validate([
             'vlan' => 'required',
             'ip' => 'required',
-            // 'service' => 'required',
             'device' => 'required',
             'vlanid' => 'required',
-            // 'rack' => 'required',
-            // 'bandwith' => 'required',
-            // 'location' => 'required',
-
+            'service' => 'nullable|exists:tb_service,id',
         ]);
 
         $ip = IpModel::findOrFail($id);
-        $ip->update([
+
+        $update = [
             'vlan' => $request->vlan,
             'ip' => $request->ip,
-            'service' => $request->service,
             'device' => $request->device,
             'vlanid' => $request->vlanid,
             'rack' => $request->rack,
             'bandwith' => $request->bandwith,
             'location' => $request->location,
+        ];
 
-        ]);
+        // Jika request mengirim service (termasuk empty string), set sesuai:
+        if ($request->has('service')) {
+            // jika kosong => set null (membersihkan), kalau ada id => set id
+            $update['service'] = trim((string)$request->service) === '' ? null : $request->service;
+        }
+
+        $ip->update($update);
 
         return redirect()->route('ip.ip')->with('success', 'IP updated successfully.');
     }

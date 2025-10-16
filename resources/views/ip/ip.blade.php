@@ -113,18 +113,17 @@
                 <input type="hidden" name="vlanid" id="vlanid_{{ $item->id }}" value="{{ $item->vlanid ?? '' }}">
               </div>
               <div class="mb-3">
-                        <label for="service" class="form-label">Service</label>
-                         <select class="form-select"  name="service" id="service" aria-label="Default select example">
-
-                          <option selected="">Select Service</option>
-                         
-                            @foreach ($services as $service)
-                <option value="{{ $service->id }}" {{ $item->service == $service->id ? 'selected' : '' }}>
-                  {{ $service->service }}
-                </option>
-              @endforeach
-              </select>
+                        <label for="service_{{ $item->id }}" class="form-label">Service</label>
+                         <select class="form-select" name="service" id="service_{{ $item->id }}" aria-label="Default select example">
+                          <option value="">Select service</option>
+                            @foreach ($services as $s)
+                              <option value="{{ $s->id }}" {{ (string) old('service', $item->service ?? '') === (string) $s->id ? 'selected' : '' }}>
+                                {{ $s->service }}
+                              </option>
+                            @endforeach
+                        </select>
               </div>
+              
          
 
           <div class="mb-3">
@@ -219,9 +218,9 @@
                             <input type="hidden" name="vlanid" id="create_vlanid" value="">
                         </div>
                          <div class="mb-3">
-                        <label for="service" class="form-label">IP Sevices</label>
-                         <select class="form-select"  name="service" id="service" aria-label="Default select example">
-                          <option selected="">Select service</option>
+                        <label for="create_service" class="form-label">IP Sevices</label>
+                         <select class="form-select"  name="service" id="create_service" aria-label="Default select example">
+                          <option value="">Select service</option>
                          
                             @foreach($services as $service)
                                 <option value="{{ $service->id}}">{{ $service->service }}</option>
