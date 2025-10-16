@@ -79,12 +79,12 @@
         <div class="modal-body">
               <div class="mb-3">
                         <label for="ip" class="form-label">IP</label>
-                         <select class="form-select"  name="ip" id="ip" aria-label="Default select example">
-                          <option selected="">Select IP</option>
+                         <select class="form-select ip-select" name="ip" id="ip_edit_{{ $item->id }}" aria-label="Default select example" style="width:100%">
+                          <option value="">Select IP</option>
                          
                             @foreach ($ips as $ip)
                 <option value="{{ $ip->id }}" {{ $item->ip == $ip->id ? 'selected' : '' }}>
-                  {{ $ip->ip }}
+                  {{ $ip->ip }} - {{ $ip->device }}
                 </option>
               @endforeach
                         </select>
@@ -173,15 +173,14 @@
                    
                     <div class="modal-body">
                         <div class="mb-3">
-                        <label for="ip" class="form-label">Ip</label>
-                         <select class="form-select"  name="ip" id="ip" aria-label="Default select example">
-                          <option selected="">Select ip</option>
-                         
-                            @foreach($ips as $ip)
-                                <option value="{{ $ip->id }}">{{ $ip->ip }} - {{ $ip->device }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+      <label for="ip" class="form-label">Ip</label>
+      <select class="form-select ip-select" name="ip" id="ip" aria-label="Default select example" style="width:100%">
+        <option value="">Select ip</option>
+        @foreach($ips as $ip)
+          <option value="{{ $ip->id }}">{{ $ip->ip }} - {{ $ip->device }}</option>
+        @endforeach
+      </select>
+    </div>
                           <div class="mb-3">
                             <label for="service_command" class="form-label">Service Command</label>
                             <input type="text" name="service_command" id="service_command" class="form-control" placeholder="service command" required>
@@ -214,3 +213,58 @@
 
 </div>
 @endsection
+
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+/* optional: buat search box terlihat rapi di dalam dropdown */
+.select2-container--default .select2-search--dropdown .select2-search__field {
+  box-shadow: none;
+  border: 1px solid #e3e7ef;
+  padding: .4rem .5rem;
+}
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // init for add modal
+  $('#basicModal .ip-select').select2({
+    width: '100%',
+    placeholder: 'Search IP - device',
+    allowClear: true,
+    dropdownParent: $('#basicModal'),
+    minimumResultsForSearch: 0 // 0 = always show search box
+  });
+
+  // init for each edit modal select (handles multiple modals)
+  document.querySelectorAll('.ip-select[id^="ip_edit_"]').forEach(function(el){
+    $(el).select2({
+      width: '100%',
+      placeholder: 'Search IP - device',
+      allowClear: true,
+      dropdownParent: $(el).closest('.modal'),
+      minimumResultsForSearch: 0
+    });
+  });
+
+  // if modals created dynamically, re-init on modal show
+  $(document).on('shown.bs.modal', '.modal', function () {
+    $(this).find('.ip-select').each(function () {
+      if (!$(this).hasClass('select2-hidden-accessible')) {
+        $(this).select2({
+          width: '100%',
+          placeholder: 'Search IP - device',
+          allowClear: true,
+          dropdownParent: $(this).closest('.modal'),
+          minimumResultsForSearch: 0
+        });
+      }
+    });
+  });
+});
+</script>
+@endpush

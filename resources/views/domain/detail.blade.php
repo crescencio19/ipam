@@ -1,6 +1,18 @@
 @extends('layout.main')
 
 @section('content')
+@php
+  // pilih label yang akan ditampilkan di title:
+  // prioritas: domain -> vlan -> fallback $title
+  $entityLabel = null;
+  if (isset($domain) && !empty($domain->domain)) {
+      $entityLabel = $domain->domain;
+  } elseif (isset($vlan) && !empty($vlan->vlan)) {
+      // bisa tampilkan vlanid + vlan name
+      $entityLabel = ($vlan->vlanid ? ($vlan->vlanid . ' - ') : '') . ($vlan->vlan ?? $vlan->name ?? '');
+  }
+@endphp
+
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
   <form action="{{ url()->current() }}" method="GET" class="navbar-nav align-items-center">
     <div class="nav-item d-flex align-items-center">
@@ -10,6 +22,13 @@
   </form>
 </nav>
 
+<h4 class="fw-bold py-3 mb-4">
+  {{ $title ?? 'Detail' }}
+  @if($entityLabel)
+    <small class="text-muted"> — {{ $entityLabel }}</small>
+  @endif
+</h4>
+
 @php
   // fallback: jika controller mengirim $isIntra, gunakan negasinya; jika tidak, tetap pakai $isEnterprise jika ada
   $isEnterprise = $isEnterprise ?? (isset($isIntra) ? !$isIntra : (isset($domain) ? (stripos($domain->domain ?? '', 'enterprise') !== false) : false));
@@ -18,8 +37,6 @@
 @endphp
 
 <div class="container-xxl flex-grow-1 container-p-y">
-    <h4 class="fw-bold py-3 mb-4">{{ $title }}</h4>
-
     {{-- Alert jika melakukan pencarian tapi tidak ada hasil pada detail domain --}}
     @if(request('search') && ( (isset($data) && method_exists($data, 'total') ? $data->total() == 0 : (isset($data) ? $data->count() == 0 : true)) ))
       <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -32,14 +49,26 @@
     <!-- Basic Bootstrap Table -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">{{ $title }}</h5>
+            <h5 class="mb-0">
+              {{ $title }}
+              @if(isset($domain) && !empty($domain->domain))
+                <small class="text-muted"> — {{ $domain->domain }}</small>
+              @endif
+            </h5>
+            <div>
+              <select id="serviceFilter" class="form-select form-select-sm" style="min-width:200px;">
+                <option value="all">All IPs</option>
+                <option value="with">With Service</option>
+                <option value="without">Without Service</option>
+              </select>
+            </div>
         </div>
         <div class="table-responsive text-nowrap">
             <table class="table">
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Domain</th>
+                        {{-- <th>Domain</th> --}}
                         <th>Device</th>
                         <th>IP</th>
                         <th>Vlan-ID</th>
@@ -62,12 +91,11 @@
                 <tbody class="table-border-bottom-0">
                     @forelse ($data as $row)
                         @php
-                            // service check dan warna baris (merah = ada service, hijau = tidak ada)
                             $serviceLabel = $row->service_name ?? $row->Service ?? null;
                             $hasService = !empty($serviceLabel);
                             $rowClass = $hasService ? 'table-danger' : 'table-success';
                         @endphp
-                        <tr class="{{ $rowClass }}">
+                        <tr class="{{ $rowClass }}" data-has-service="{{ $hasService ? '1' : '0' }}">
                             <td>{{ (isset($data) && method_exists($data, 'currentPage')) ? (($data->currentPage() - 1) * $data->perPage() + $loop->iteration) : $loop->iteration }}</td>
                             
                             <td>{{ $row->device ?? $row->Device ?? '-' }}</td>
@@ -107,4 +135,25 @@
     </div>
 
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const filter = document.getElementById('serviceFilter');
+  if (!filter) return;
+  filter.addEventListener('change', function () {
+    const val = this.value;
+    document.querySelectorAll('tbody.table-border-bottom-0 tr').forEach(function (tr) {
+      // ignore empty-row (no data) which has colspan message
+      if (tr.querySelector('td') && tr.querySelector('td').getAttribute('colspan')) return;
+      const has = tr.getAttribute('data-has-service') === '1';
+      if (val === 'all') {
+        tr.style.display = '';
+      } else if (val === 'with') {
+        tr.style.display = has ? '' : 'none';
+      } else if (val === 'without') {
+        tr.style.display = has ? 'none' : '';
+      }
+    });
+  });
+});
+</script>
 @endsection

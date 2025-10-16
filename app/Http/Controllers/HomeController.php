@@ -26,6 +26,7 @@ class HomeController extends Controller
                         ->orWhere('ip.device', 'like', "%{$search}%")
                         ->orWhere('vlan.vlan', 'like', "%{$search}%")
                         ->orWhere('service.service', 'like', "%{$search}%");
+                        
                 })
                 ->select('vlan.domain as domain_id')
                 ->first();

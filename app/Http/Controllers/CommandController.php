@@ -16,13 +16,17 @@ class CommandController extends Controller
         $query = CommandModel::with('ipData')->where('isdeleted', 0);
 
         if ($search) {
+            // group all search conditions (including relation) together
             $query->where(function ($q) use ($search) {
                 $q->where('service_command', 'like', "%{$search}%")
                     ->orWhere('command', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            })->orWhereHas('ipData', function ($q) use ($search) {
-                $q->where('ip', 'like', "%{$search}%")
-                    ->orWhere('device', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('ipData', function ($q2) use ($search) {
+                        $q2->where('ip', 'like', "%{$search}%")
+                            ->orWhere('device', 'like', "%{$search}%")
+                            // also match combined "ip - device"
+                            ->orWhereRaw("CONCAT(ip, ' - ', device) LIKE ?", ["%{$search}%"]);
+                    });
             });
         }
 

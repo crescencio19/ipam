@@ -65,17 +65,17 @@
                       $rowClass = $hasServiceFinal ? 'table-danger' : 'table-success';
                     @endphp
                     <tr class="{{ $rowClass }}">
-                            <td>{{ ($ips->currentPage() - 1) * $ips->perPage() + $loop->iteration }}</td>
-                            <td>{{ $item->device }}</td>
-                            <td>{{ $item->ip }}</td>
-                            <td>{{ $item->vlanid_value ?? $item->vlanid ?? '-' }}</td>
-                            <td>{{ $item->vlan_name ?? '-' }}</td>
-                        <td>{{ $serviceLabel }}</td>
+                         <td>{{ ($ips->currentPage() - 1) * $ips->perPage() + $loop->iteration }}</td>
+                         <td>{{ $item->device }}</td>
+                         <td>{{ $item->ip }}</td>
+                         <td>{{ $item->vlanid_value ?? $item->vlanid ?? '-' }}</td>
+                         <td>{{ $item->vlan_name ?? '-' }}</td>
+                         <td>{{ $serviceLabel }}</td>
                          <td>{{ $item->rack ?? '-' }}</td>
                          <td>{{ $item->bandwith ?? '-' }}</td>
                          <td>{{ $item->location ?? '-' }}</td>
                          <td>
-                             <!-- Tombol Edit -->
+                             <!-- Tombol Edit -->                        
                              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $item->id }}">
                                  <i class='bx bx-edit'></i>
                              </button>
@@ -103,16 +103,15 @@
            <div class="mb-3">
                 <label for="vlan" class="form-label">Vlan (VlanId - Name)</label>
                 <select class="form-select edit-vlan" name="vlan" id="vlan_{{ $item->id }}" aria-label="Default select example" data-item="{{ $item->id }}">
-                  <option value="">Select Vlan</option>
-                  @foreach ($vlans as $vlan)
-                    <option value="{{ $vlan->id }}" data-vlanid="{{ $vlan->vlanid ?? '' }}" data-domain="{{ $vlan->domainData->domain ?? '' }}" {{ ($item->vlan == $vlan->id) ? 'selected' : '' }}>
-                      {{ ($vlan->vlanid ?? '') }} - {{ $vlan->vlan }} - {{ $vlan->domainData->domain ?? '' }}
-                    </option>
-                  @endforeach
+                <option value="">Select Vlan</option>
+                @foreach ($vlans as $vlan)
+                <option value="{{ $vlan->id }}" data-vlanid="{{ $vlan->vlanid ?? '' }}" data-domain="{{ $vlan->domainData->domain ?? '' }}" {{ ($item->vlan == $vlan->id) ? 'selected' : '' }}>
+                {{ ($vlan->vlanid ?? '') }} - {{ $vlan->vlan }} - {{ $vlan->domainData->domain ?? '' }}
+                </option>
+                @endforeach
                 </select>
                 <input type="hidden" name="vlanid" id="vlanid_{{ $item->id }}" value="{{ $item->vlanid ?? '' }}">
               </div>
-
               <div class="mb-3">
                         <label for="service" class="form-label">Service</label>
                          <select class="form-select"  name="service" id="service" aria-label="Default select example">
@@ -124,8 +123,8 @@
                   {{ $service->service }}
                 </option>
               @endforeach
-                        </select>
-                    </div>
+              </select>
+              </div>
          
 
           <div class="mb-3">
@@ -271,8 +270,8 @@ document.addEventListener('DOMContentLoaded', function () {
     createSelect.addEventListener('change', function () {
       const opt = this.options[this.selectedIndex];
       createHidden.value = opt ? opt.dataset.vlanid || '' : '';
-    });
-  }
+});
+}
 
   // For edit selects (multiple in page)
   document.querySelectorAll('.edit-vlan').forEach(function(sel){

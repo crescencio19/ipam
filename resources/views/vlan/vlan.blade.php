@@ -179,28 +179,28 @@
                             @endforeach
                         </select>
                     </div>
-                          <div class="mb-3">
+                    <div class="mb-3">
                             <label for="vlanid" class="form-label">Vlan Id</label>
                             <input type="text" name="vlanid" id="vlanid" class="form-control" placeholder="vlanId" required>
-                        </div>
-                          <div class="mb-3">
+                    </div>
+                    <div class="mb-3">
                             <label for="vlan" class="form-label">Vlan</label>
                             <input type="text" name="vlan" id="vlan" class="form-control" placeholder="vlan" required>
-                        </div>
-                             <div class="mb-3">
-                            <label for="block_ip" class="form-label">Block IP</label>
-                            <input type="text" name="block_ip" id="block_ip" class="form-control" placeholder="block ip" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="gateway" class="form-label">Gateway</label>
-                            <input type="text" name="gateway" id="gateway" class="form-control" placeholder="gateway " required>
-                        </div>
+                    </div>
+                    <div class="mb-3">
+                    <label for="block_ip" class="form-label">Block IP</label>
+                    <input type="text" name="block_ip" id="block_ip" class="form-control" placeholder="block ip" required>
+                    </div>
+                    <div class="mb-3">
+                    <label for="gateway" class="form-label">Gateway</label>
+                    <input type="text" name="gateway" id="gateway" class="form-control" placeholder="gateway " required>
+                    </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                            Close
-                        </button>
-                        <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Close
+                    </button>
+                    <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </div>
             </form>

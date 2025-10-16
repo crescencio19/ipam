@@ -116,19 +116,28 @@ class DomainController extends Controller
 
         $dataQuery = \DB::table('tb_ip as ip')
             ->leftJoin('tb_vlan as vlan', 'ip.vlan', '=', 'vlan.id')
-            ->leftJoin('tb_service as service', function ($join) {
-                // ip.service bisa berisi id atau nama service -> handle keduanya
-                $join->on('ip.service', '=', 'service.id')
-                    ->orOn('ip.service', '=', 'service.service');
-            })
+            // join service by id and by name separately for reliability
+            ->leftJoin('tb_service as s_id', 'ip.service', '=', 's_id.id')
+            ->leftJoin('tb_service as s_name', 'ip.service', '=', 's_name.service')
             ->where('ip.isdeleted', 0)
             ->where('vlan.domain', $id);
 
         if ($search) {
-            $dataQuery->where(function ($q) use ($search) {
-                $q->where('ip.ip', 'like', "%{$search}%")
-                    ->orWhere('ip.device', 'like', "%{$search}%")
-                    ->orWhere('service.service', 'like', "%{$search}%");
+            $s = strtolower(trim($search));
+            $like = "%{$s}%";
+            $dataQuery->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(ip.ip) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(ip.device) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(vlan.vlan) LIKE ?', [$like])
+                    // search service from either join (coalesce)
+                    ->orWhereRaw('LOWER(COALESCE(s_id.service, s_name.service, ip.service)) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(vlan.gateway) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(ip.rack) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(ip.location) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s_id.customer, s_name.customer)) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(ip.bandwith) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s_id.longlat, s_name.longlat)) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(COALESCE(s_id.location, s_name.location)) LIKE ?', [$like]);
             });
         }
 
@@ -138,10 +147,11 @@ class DomainController extends Controller
             'vlan.vlan as vlan_name',
             'vlan.block_ip',
             'vlan.gateway',
-            'service.service as service_name',
-            'service.customer as customer',
-            'service.longlat as longlat',
-            'service.location as service_location', // <-- dari tb_service
+            // prefer s_id then s_name, fallback ip.service text
+            \DB::raw('COALESCE(s_id.service, s_name.service, ip.service) as service_name'),
+            \DB::raw('COALESCE(s_id.customer, s_name.customer) as customer'),
+            \DB::raw('COALESCE(s_id.longlat, s_name.longlat) as longlat'),
+            \DB::raw('COALESCE(s_id.location, s_name.location) as service_location'),
             'ip.rack',
             'ip.location as ip_location'
         )
