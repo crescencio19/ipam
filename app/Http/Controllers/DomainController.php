@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DomainModel;
+use App\Models\IpModel;
 use Illuminate\Support\Facades\DB;
 
 class DomainController extends Controller
@@ -163,5 +164,31 @@ class DomainController extends Controller
         $title = 'Detail IP';
 
         return view('domain.detail', compact('data', 'domain', 'title'));
+    }
+    public function detail(Request $request, $id)
+    {
+        $term = trim($request->get('search', ''));
+
+        $query = IpModel::query()
+            ->where('domain_id', $id); // contoh filter domain
+
+        if ($term !== '') {
+            $query->where(function ($q) use ($term) {
+                $q->where('device', 'like', "%{$term}%")
+                    ->orWhere('ip', 'like', "%{$term}%")
+                    ->orWhere('vlanid', 'like', "%{$term}%")
+                    ->orWhere('vlan_name', 'like', "%{$term}%")
+                    // tambahkan kolom block_ip, rack, location
+                    ->orWhere('block_ip', 'like', "%{$term}%")
+                    ->orWhere('rack', 'like', "%{$term}%")
+                    ->orWhere('location', 'like', "%{$term}%");
+                // jika service adalah relasi, bisa gunakan orWhereHas:
+                // ->orWhereHas('serviceRelation', fn($s) => $s->where('service','like', "%{$term}%"));
+            });
+        }
+
+        $data = $query->orderBy('ip')->paginate(50);
+
+        return view('domain.detail', compact('data', 'title', 'domain', 'vlan'));
     }
 }

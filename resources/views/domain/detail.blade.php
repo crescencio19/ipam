@@ -138,22 +138,65 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const filter = document.getElementById('serviceFilter');
-  if (!filter) return;
-  filter.addEventListener('change', function () {
-    const val = this.value;
-    document.querySelectorAll('tbody.table-border-bottom-0 tr').forEach(function (tr) {
-      // ignore empty-row (no data) which has colspan message
-      if (tr.querySelector('td') && tr.querySelector('td').getAttribute('colspan')) return;
-      const has = tr.getAttribute('data-has-service') === '1';
-      if (val === 'all') {
-        tr.style.display = '';
-      } else if (val === 'with') {
-        tr.style.display = has ? '' : 'none';
-      } else if (val === 'without') {
-        tr.style.display = has ? 'none' : '';
-      }
+  if (filter) {
+    filter.addEventListener('change', function () {
+      const val = this.value;
+      document.querySelectorAll('tbody.table-border-bottom-0 tr').forEach(function (tr) {
+        if (tr.querySelector('td') && tr.querySelector('td').getAttribute('colspan')) return;
+        const has = tr.getAttribute('data-has-service') === '1';
+        if (val === 'all') tr.style.display = '';
+        else if (val === 'with') tr.style.display = has ? '' : 'none';
+        else if (val === 'without') tr.style.display = has ? 'none' : '';
+      });
     });
+  }
+
+  // build header -> index map (robust for enterprise vs non-enterprise layouts)
+  const headerMap = {};
+  document.querySelectorAll('table thead th').forEach((th, i) => {
+    const key = (th.textContent || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    headerMap[key] = i;
   });
+
+  function cellTextByHeader(tr, headerNameVariants) {
+    for (const name of headerNameVariants) {
+      const key = name.toLowerCase();
+      if (key in headerMap) {
+        const idx = headerMap[key];
+        return (tr.children[idx] && tr.children[idx].textContent || '').trim().toLowerCase();
+      }
+    }
+    return '';
+  }
+
+  const searchInput = document.querySelector('input[name="search"]');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      const q = this.value.toLowerCase();
+      document.querySelectorAll('tbody.table-border-bottom-0 tr').forEach(tr => {
+        if (tr.querySelector('td[colspan]')) return;
+
+        const device = cellTextByHeader(tr, ['device']);
+        const ip = cellTextByHeader(tr, ['ip']);
+        const vlanId = cellTextByHeader(tr, ['vlan-id','vlan id','vlanid']);
+        const vlanName = cellTextByHeader(tr, ['vlan name','vlan']);
+        const service = cellTextByHeader(tr, ['services','service']);
+        const blockIp = cellTextByHeader(tr, ['block ip','block_ip','blockip']);
+        const rack = cellTextByHeader(tr, ['rack server','rack']);
+        const location = cellTextByHeader(tr, ['location','lokasi']);
+
+        // enterprise/customer related fields
+        const customer = cellTextByHeader(tr, ['customer','nama customer','nama_customer']);
+        const bandwith = cellTextByHeader(tr, ['bandwith','bandwidth']);
+        const longlat = cellTextByHeader(tr, ['longlat','long_lat','long lat']);
+        const serviceLocation = cellTextByHeader(tr, ['location customer','service location','service_location','serviceLocation']);
+
+        const hay = [device, ip, vlanId, vlanName, service, blockIp, rack, location, customer, bandwith, longlat, serviceLocation];
+        const match = hay.some(s => s.includes(q));
+        tr.style.display = match ? '' : 'none';
+      });
+    });
+  }
 });
 </script>
 @endsection
