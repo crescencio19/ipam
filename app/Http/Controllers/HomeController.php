@@ -115,7 +115,7 @@ class HomeController extends Controller
                     ->orWhere('ip.device', 'like', "%{$search}%")
                     ->orWhere('vlan.vlan', 'like', "%{$search}%")
                     ->orWhere('service.service', 'like', "%{$search}%");
-            });
+                });
         }
 
         $data = $base->orderByRaw('INET_ATON(ip.ip) asc')->paginate(50)->appends(['search' => $search]);

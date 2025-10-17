@@ -75,15 +75,85 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const commands = @json($__commands_payload);
 
+  // debug quick check
+  console.log('commands payload:', commands);
+
+  // init Select2 with custom matcher if Select2 is loaded
+  if (window.jQuery && typeof jQuery.fn.select2 !== 'undefined') {
+    (function($){
+      function matchStart(params, data) {
+        // If there are no search terms, return all of the data
+        if ($.trim(params.term) === '') {
+          return data;
+        }
+
+        // If this item has children, filter them
+        if (typeof data.children !== 'undefined') {
+          var filteredChildren = [];
+          $.each(data.children, function (idx, child) {
+            if (child.text.toUpperCase().indexOf(params.term.toUpperCase()) == 0) {
+              filteredChildren.push(child);
+            }
+          });
+          if (filteredChildren.length) {
+            var modifiedData = $.extend({}, data, true);
+            modifiedData.children = filteredChildren;
+            return modifiedData;
+          }
+          return null;
+        }
+
+        // For single (leaf) options, match against its text
+        if (typeof data.text === 'string' && data.text.toUpperCase().indexOf(params.term.toUpperCase()) === 0) {
+          return data;
+        }
+
+        // Return `null` if the term should not be displayed
+        return null;
+      }
+
+      $('#ip_select').select2({
+        width: '100%',
+        placeholder: 'Select IP',
+        allowClear: true,
+        matcher: matchStart,
+        minimumResultsForSearch: 0,
+        dropdownParent: $(document.body)
+      });
+
+      // also listen with jQuery (Select2-friendly)
+      $('#ip_select').on('change', function() {
+        console.log('ip_select changed ->', $(this).val());
+        populateCommandsForIp($(this).val());
+      });
+
+      $('#command_select').select2({
+        width: '100%',
+        placeholder: 'Select Service Command',
+        allowClear: true,
+        minimumResultsForSearch: 0,
+        dropdownParent: $(document.body)
+      });
+    })(jQuery);
+  }
+
   function clearCommands() {
-    cmdSelect.innerHTML = '';
-    const opt = document.createElement('option');
-    opt.value = '';
-    opt.text = 'Select Service Command';
-    opt.disabled = true;
-    opt.selected = true;
-    cmdSelect.appendChild(opt);
-    cmdSelect.disabled = true;
+    // prefer jQuery when available so Select2 UI ikut berubah
+    if (window.jQuery && $(cmdSelect).length) {
+      $(cmdSelect).empty();
+      $(cmdSelect).append($('<option>', { value: '', text: 'Select Service Command', disabled: true, selected: true }));
+      $(cmdSelect).prop('disabled', true);
+      try { $(cmdSelect).trigger('change.select2'); } catch(e){}
+    } else {
+      cmdSelect.innerHTML = '';
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.text = 'Select Service Command';
+      opt.disabled = true;
+      opt.selected = true;
+      cmdSelect.appendChild(opt);
+      cmdSelect.disabled = true;
+    }
     updateGenerateButton();
   }
 
@@ -93,35 +163,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const filtered = commands.filter(c => String(c.ip) === String(ipId) && (c.service_command || c.command));
     if (filtered.length === 0) {
-      const noOpt = document.createElement('option');
-      noOpt.value = '';
-      noOpt.text = 'No Service Command for selected IP';
-      noOpt.disabled = true;
-      cmdSelect.appendChild(noOpt);
-      cmdSelect.disabled = true;
+      if (window.jQuery && $(cmdSelect).length) {
+        $(cmdSelect).append($('<option>', { value: '', text: 'No Service Command for selected IP', disabled: true }));
+        $(cmdSelect).prop('disabled', true);
+        $(cmdSelect).trigger('change.select2');
+      } else {
+        const noOpt = document.createElement('option');
+        noOpt.value = '';
+        noOpt.text = 'No Service Command for selected IP';
+        noOpt.disabled = true;
+        cmdSelect.appendChild(noOpt);
+        cmdSelect.disabled = true;
+      }
       updateGenerateButton();
       return;
     }
 
-    filtered.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c.id;
-      o.text = c.service_command ? c.service_command : (c.command ? c.command.substring(0,80) + '...' : '—');
-      cmdSelect.appendChild(o);
-    });
-    cmdSelect.disabled = false;
+    // add options via jQuery so Select2 knows about them
+    if (window.jQuery && $(cmdSelect).length) {
+      filtered.forEach(c => {
+        const text = c.service_command ? c.service_command : (c.command ? c.command.substring(0,80) + '...' : '—');
+        const $opt = $('<option>', { value: c.id, text: text });
+        $(cmdSelect).append($opt);
+      });
+      $(cmdSelect).prop('disabled', false);
+      $(cmdSelect).trigger('change.select2');
+    } else {
+      filtered.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.id;
+        o.text = c.service_command ? c.service_command : (c.command ? c.command.substring(0,80) + '...' : '—');
+        cmdSelect.appendChild(o);
+      });
+      cmdSelect.disabled = false;
+    }
     updateGenerateButton();
   }
 
   function updateGenerateButton() {
-    btnGenerate.disabled = !(ipSelect.value && cmdSelect.value && !cmdSelect.disabled);
+    // read values via jQuery when Select2 is present
+    const ipVal = (window.jQuery && $('#ip_select').length) ? $('#ip_select').val() : ipSelect.value;
+    const cmdVal = (window.jQuery && $('#command_select').length) ? $('#command_select').val() : cmdSelect.value;
+    btnGenerate.disabled = !(ipVal && cmdVal);
   }
 
-  ipSelect.addEventListener('change', function () {
-    populateCommandsForIp(this.value);
-  });
-
-  cmdSelect.addEventListener('change', updateGenerateButton);
+  // ensure Select2 change handlers also call updateGenerateButton
+  if (window.jQuery && typeof jQuery.fn.select2 !== 'undefined') {
+    (function($){
+      $('#ip_select').on('change', function() {
+        populateCommandsForIp($(this).val());
+        updateGenerateButton();
+      });
+      $('#command_select').on('change', function(){ updateGenerateButton(); });
+    })(jQuery);
+  } else {
+    ipSelect.addEventListener('change', function () { populateCommandsForIp(this.value); updateGenerateButton(); });
+    cmdSelect.addEventListener('change', updateGenerateButton);
+  }
 
   // modal population when Generate clicked
   btnGenerate.addEventListener('click', function () {
