@@ -79,11 +79,11 @@
         <div class="modal-body">
               <div class="mb-3">
                         <label for="ip" class="form-label">IP</label>
-                         <select class="form-select ip-select" name="ip" id="ip_edit_{{ $item->id }}" aria-label="Default select example" style="width:100%">
+                         <select class="form-select ip-select" name="ip[]" id="ip_edit_{{ $item->id }}" aria-label="Default select example" style="width:100%" multiple>
                           <option value="">Select IP</option>
                          
                             @foreach ($ips as $ip)
-                <option value="{{ $ip->id }}" {{ $item->ip == $ip->id ? 'selected' : '' }}>
+                <option value="{{ $ip->id }}" {{ (is_array($item->ip) && in_array($ip->id, $item->ip)) || $item->ip == $ip->id ? 'selected' : '' }}>
                   {{ $ip->ip }} - {{ $ip->device }}
                 </option>
               @endforeach
@@ -145,23 +145,23 @@
                         </button>
                         <button type="submit" class="btn btn-primary">Delete</button>
                     </div>
-                </div>
+                    </div>
                             </form>
                         </div>
                     </div>
                     @endforeach
-                </tbody>
-            </table>
-    <div class="col d-flex justify-content-end">
-        {{ $commands->links('pagination::bootstrap-5') }}
-    </div>
-
+                    </tbody>
+                    </table>
+                    <div class="col d-flex justify-content-end">
+                    {{ $commands->links('pagination::bootstrap-5') }}
         </div>
-    </div>
+
+          </div>
+          </div>
     <!--/ Basic Bootstrap Table -->
 
     <!-- Modal Add Service -->
-    <div class="modal fade" id="basicModal" tabindex="-1" aria-labelledby="basicModalLabel" aria-hidden="true">
+        <div class="modal fade" id="basicModal" tabindex="-1" aria-labelledby="basicModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form action="{{ route('command.store') }}" method="POST">
                 @csrf
@@ -174,7 +174,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
       <label for="ip" class="form-label">Ip</label>
-      <select class="form-select ip-select" name="ip" id="ip" aria-label="Default select example" style="width:100%">
+      <select class="form-select ip-select" name="ip[]" id="ip" aria-label="Default select example" style="width:100%" multiple>
         <option value="">Select ip</option>
         @foreach($ips as $ip)
           <option value="{{ $ip->id }}">{{ $ip->ip }} - {{ $ip->device }}</option>
@@ -185,16 +185,15 @@
                             <label for="service_command" class="form-label">Service Command</label>
                             <input type="text" name="service_command" id="service_command" class="form-control" placeholder="service command" required>
                         </div>
-
                         <div>
                         <label for="exampleFormControlTextarea1" class="form-label">Command</label>
                         <textarea class="form-control" name="command" id="exampleFormControlTextarea1" placeholder="command" required rows="3" style="height: 98px;"></textarea>
                         
-                      </div>
+                        </div>
                           
-                             <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <input type="text" name="description" id="description" class="form-control" placeholder="description" required>
+                        <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" name="description" id="description" class="form-control" placeholder="description" required>
                         </div>
                          
                      
@@ -217,11 +216,71 @@
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-/* optional: buat search box terlihat rapi di dalam dropdown */
-.select2-container--default .select2-search--dropdown .select2-search__field {
+/* custom multiselect dropdown */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background: #eef2ff;
+  border: 1px solid #d7dfff;
+  color: #1f2d78;
+  padding: .25rem .5rem;
+  margin: .18rem .25rem;
+  border-radius: .5rem;
+  font-size: .85rem;
+}
+
+.select2-container--default .select2-selection--multiple {
+  min-height: calc(1.5em + .75rem);
+  padding: .35rem .5rem;
+  border-radius: .5rem;
+}
+
+/* dropdown styling target */
+.select2-dropdown.custom-multiselect-dropdown {
+  border-radius: .5rem;
+  border: 1px solid #e6e9f0;
+  box-shadow: 0 6px 18px rgba(32,40,70,0.06);
+  padding: .4rem;
+}
+
+/* search box inside dropdown */
+.select2-container--open .select2-search--dropdown .select2-search__field {
+  width: 100% !important;
   box-shadow: none;
   border: 1px solid #e3e7ef;
-  padding: .4rem .5rem;
+  padding: .45rem .6rem;
+  border-radius: .4rem;
+  margin-bottom: .4rem;
+  background: #fff;
+}
+
+/* results list: item spacing and hover */
+.select2-container--default .select2-results__option {
+  padding: .55rem .6rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.select2-container--default .select2-results__option--highlighted {
+  background: #f2f6ff;
+  color: #0b2a66;
+}
+
+/* checkbox visual inside template */
+.select2-container .form-check-input {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+}
+
+/* limit dropdown height and show scrollbar */
+.select2-container--default .select2-results {
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* small responsive tweak */
+@media (max-width: 576px){
+  .select2-dropdown.custom-multiselect-dropdown { font-size: .95rem; }
 }
 </style>
 @endpush
@@ -231,27 +290,50 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // init for add modal
+
+  function templateWithCheckbox(state) {
+    if (!state.id) return state.text;
+    const checked = state.selected ? 'checked' : '';
+    // use Bootstrap form-check markup for better alignment
+    return '<div style="display:flex;align-items:center;width:100%;">' +
+             '<div class="form-check me-2" style="margin:0;">' +
+               '<input class="form-check-input" type="checkbox" '+checked+' readonly />' +
+             '</div>' +
+             '<div style="flex:1;">' + state.text + '</div>' +
+           '</div>';
+  }
+
+  // init Add modal multi select
   $('#basicModal .ip-select').select2({
     width: '100%',
     placeholder: 'Search IP - device',
     allowClear: true,
     dropdownParent: $('#basicModal'),
-    minimumResultsForSearch: 0 // 0 = always show search box
+    dropdownCssClass: 'custom-multiselect-dropdown',
+    minimumResultsForSearch: 0,
+    closeOnSelect: false,
+    templateResult: templateWithCheckbox,
+    templateSelection: function (state) { return state.text; },
+    escapeMarkup: function (m) { return m; }
   });
 
-  // init for each edit modal select (handles multiple modals)
+  // init each edit modal select (handles multiple modals) - preserves preselected values
   document.querySelectorAll('.ip-select[id^="ip_edit_"]').forEach(function(el){
     $(el).select2({
       width: '100%',
       placeholder: 'Search IP - device',
       allowClear: true,
       dropdownParent: $(el).closest('.modal'),
-      minimumResultsForSearch: 0
+      dropdownCssClass: 'custom-multiselect-dropdown',
+      minimumResultsForSearch: 0,
+      closeOnSelect: false,
+      templateResult: templateWithCheckbox,
+      templateSelection: function (state) { return state.text; },
+      escapeMarkup: function (m) { return m; }
     });
   });
 
-  // if modals created dynamically, re-init on modal show
+  // re-init when modal shown (dynamic cases)
   $(document).on('shown.bs.modal', '.modal', function () {
     $(this).find('.ip-select').each(function () {
       if (!$(this).hasClass('select2-hidden-accessible')) {
@@ -260,11 +342,20 @@ document.addEventListener('DOMContentLoaded', function () {
           placeholder: 'Search IP - device',
           allowClear: true,
           dropdownParent: $(this).closest('.modal'),
-          minimumResultsForSearch: 0
+          dropdownCssClass: 'custom-multiselect-dropdown',
+          minimumResultsForSearch: 0,
+          closeOnSelect: false,
+          templateResult: templateWithCheckbox,
+          templateSelection: function (state) { return state.text; },
+          escapeMarkup: function (m) { return m; }
         });
+      } else {
+        // refresh visuals (checkbox states) on open
+        $(this).trigger('change.select2');
       }
     });
   });
+
 });
 </script>
 @endpush

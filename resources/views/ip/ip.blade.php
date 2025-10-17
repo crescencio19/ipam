@@ -102,7 +102,7 @@
                   
            <div class="mb-3">
                 <label for="vlan" class="form-label">Vlan (VlanId - Name)</label>
-                <select class="form-select edit-vlan" name="vlan" id="vlan_{{ $item->id }}" aria-label="Default select example" data-item="{{ $item->id }}">
+                <select class="form-select edit-vlan ip-vlan-select" name="vlan" id="vlan_{{ $item->id }}" aria-label="Default select example" data-item="{{ $item->id }}">
                 <option value="">Select Vlan</option>
                 @foreach ($vlans as $vlan)
                 <option value="{{ $vlan->id }}" data-vlanid="{{ $vlan->vlanid ?? '' }}" data-domain="{{ $vlan->domainData->domain ?? '' }}" {{ ($item->vlan == $vlan->id) ? 'selected' : '' }}>
@@ -114,7 +114,7 @@
               </div>
               <div class="mb-3">
                         <label for="service_{{ $item->id }}" class="form-label">Service</label>
-                         <select class="form-select" name="service" id="service_{{ $item->id }}" aria-label="Default select example">
+                         <select class="form-select edit-service ip-service-select" name="service" id="service_{{ $item->id }}" aria-label="Default select example">
                           <option value="">Select service</option>
                             @foreach ($services as $s)
                               <option value="{{ $s->id }}" {{ (string) old('service', $item->service ?? '') === (string) $s->id ? 'selected' : '' }}>
@@ -209,7 +209,7 @@
                     <div class="modal-body">
                          <div class="mb-3">
                          <label for="vlan" class="form-label">Vlan (VlanId - Name)</label>
-                            <select class="form-select" name="vlan" id="create_vlan" aria-label="Default select example">
+                            <select class="form-select create-vlan ip-vlan-select" name="vlan" id="create_vlan" aria-label="Default select example">
                               <option value="">Select Vlan</option>
                               @foreach($vlans as $vlan)
                                 <option value="{{ $vlan->id }}" data-vlanid="{{ $vlan->vlanid ?? '' }}" data-domain="{{ $vlan->domainData->domain ?? '' }}">{{ ($vlan->vlanid ?? '') }} - {{ $vlan->vlan }} - {{ $vlan->domainData->domain ?? '' }}</option>
@@ -219,7 +219,7 @@
                         </div>
                          <div class="mb-3">
                         <label for="create_service" class="form-label">IP Sevices</label>
-                         <select class="form-select"  name="service" id="create_service" aria-label="Default select example">
+                         <select class="form-select create-service ip-service-select"  name="service" id="create_service" aria-label="Default select example">
                           <option value="">Select service</option>
                          
                             @foreach($services as $service)
@@ -260,31 +260,84 @@
     </div>
 
 </div>
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // Create modal select -> set hidden vlanid
-  const createSelect = document.getElementById('create_vlan');
-  const createHidden = document.getElementById('create_vlanid');
-  if (createSelect) {
-    createSelect.addEventListener('change', function () {
-      const opt = this.options[this.selectedIndex];
-      createHidden.value = opt ? opt.dataset.vlanid || '' : '';
-});
-}
+  if (typeof jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
+    console.warn('Select2 not loaded');
+    return;
+  }
 
-  // For edit selects (multiple in page)
-  document.querySelectorAll('.edit-vlan').forEach(function(sel){
-    const id = sel.dataset.item;
-    const hidden = document.getElementById('vlanid_' + id);
-    // set initial value from selected option (in case option selected server-side)
-    const initOpt = sel.options[sel.selectedIndex];
-    if (hidden && initOpt) hidden.value = initOpt.dataset.vlanid || hidden.value || '';
+  // init for Create modal selects
+  $('#basicModal .ip-vlan-select').select2({
+    width: '100%',
+    placeholder: 'Select Vlan',
+    allowClear: true,
+    dropdownParent: $('#basicModal'),
+  });
 
-    sel.addEventListener('change', function () {
-      const opt = this.options[this.selectedIndex];
-      if (hidden) hidden.value = opt ? opt.dataset.vlanid || '' : '';
+  $('#basicModal .ip-service-select').select2({
+    width: '100%',
+    placeholder: 'Select Service',
+    allowClear: true,
+    dropdownParent: $('#basicModal'),
+  });
+
+  // init for Edit modal selects (multiple modals)
+  document.querySelectorAll('.ip-vlan-select[id^="vlan_"]').forEach(function(el){
+    $(el).select2({
+      width: '100%',
+      placeholder: 'Select Vlan',
+      allowClear: true,
+      dropdownParent: $(el).closest('.modal'),
     });
+  });
+
+  document.querySelectorAll('.ip-service-select[id^="service_"]').forEach(function(el){
+    $(el).select2({
+      width: '100%',
+      placeholder: 'Select Service',
+      allowClear: true,
+      dropdownParent: $(el).closest('.modal'),
+    });
+  });
+
+  // If modal opens for edit, refresh select2 dropdown positioning
+  $(document).on('shown.bs.modal', '.modal', function () {
+    $(this).find('.ip-vlan-select, .ip-service-select').each(function () {
+      if ($(this).hasClass('select2-hidden-accessible')) {
+        $(this).trigger('change.select2');
+      } else {
+        $(this).select2({ width: '100%', dropdownParent: $(this).closest('.modal'), allowClear: true });
+      }
+    });
+  });
+
+  // set create modal vlanid on change + init current value
+  $('#create_vlan').on('change', function () {
+    const vlanid = $(this).find(':selected').data('vlanid') || '';
+    $('#create_vlanid').val(vlanid);
+  });
+  // init value on load (in case option preselected)
+  (function(){
+    const init = $('#create_vlan').find(':selected').data('vlanid') || '';
+    $('#create_vlanid').val(init);
+  })();
+
+  // for each edit select: copy data-vlanid -> hidden #vlanid_{id}
+  document.querySelectorAll('.ip-vlan-select[id^="vlan_"]').forEach(function(el){
+    const $el = $(el);
+    const id = el.id.replace('vlan_','');
+    // on change update hidden input
+    $el.on('change', function () {
+      const vlanid = $el.find(':selected').data('vlanid') || '';
+      $('#vlanid_' + id).val(vlanid);
+    });
+    // init hidden on page load
+    const initVal = $el.find(':selected').data('vlanid') || '';
+    $('#vlanid_' + id).val(initVal);
   });
 });
 </script>
+@endpush
 @endsection
