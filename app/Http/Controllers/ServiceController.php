@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\ServiceModel;
+use App\Models\DomainModel;
+use App\Models\ServicesModel;
 
 class ServiceController extends Controller
 {
@@ -24,57 +27,59 @@ class ServiceController extends Controller
             });
         }
 
+        $service = ServicesModel::where('isdeleted', 0)->get();
+        $domains = DomainModel::where('isdeleted', 0)->get();
         $services = $query->orderBy('id', 'asc')->paginate(5)->appends(['search' => $search]);
         $title = 'Service';
-        return view('service.service', compact('services', 'title', 'search'));
+        return view('service.service', compact('services', 'title', 'search', 'domains', 'service'));
     }
 
 
     public function store(Request $request)
     {
-        $request->validate([
-            'service' => 'required',
-            'description' => 'required',
-            // 'customer' => 'required',
-            // 'location' => 'required',
-            // 'longlat' => 'required',
+        $data = $request->validate([
+            // use Rule::exists with DomainModel table name to avoid assuming 'domains' table
+            'domain' => ['required', Rule::exists((new DomainModel)->getTable(), 'id')],
+            'service' => ['required', Rule::exists((new ServicesModel)->getTable(), 'id')],
+            'customer' => 'nullable|string',
+            'location' => 'nullable|string',
+            'longlat' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
+        // simpan menggunakan ServiceModel (sama table yang dipakai di listing)
         ServiceModel::create([
-            'service' => $request->service,
-            'description' => $request->description,
-            'customer' => $request->customer,
-            'location' => $request->location,
-            'longlat' => $request->longlat,
-
-
-            // 'iby' => auth()->user()->name,
-            'idt' => now(),
+            'domain' => $data['domain'],
+            'service' => $data['service'], // sekarang menyimpan service_id
+            'customer' => $data['customer'] ?? null,
+            'location' => $data['location'] ?? null,
+            'longlat' => $data['longlat'] ?? null,
+            'description' => $data['description'] ?? null,
         ]);
 
-        return redirect()->route('service.service')->with('success', 'Service created successfully.');
+        return redirect()->route('service.service')->with('success', 'Saved');
     }
 
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'service' => 'required',
+        $data = $request->validate([
+            'domain' => ['required', Rule::exists((new DomainModel)->getTable(), 'id')],
+            'service' => ['required', Rule::exists((new ServicesModel)->getTable(), 'id')],
             'description' => 'required',
-            // 'customer' => 'required',
-            // 'location' => 'required',
-            // 'longlat' => 'required',
+            'customer' => 'nullable|string',
+            'location' => 'nullable|string',
+            'longlat' => 'nullable|string',
         ]);
 
         $service = ServiceModel::findOrFail($id);
         $service->update([
-            'service' => $request->service,
-            'description' => $request->description,
-            'customer' => $request->customer,
-            'location' => $request->location,
-            'longlat' => $request->longlat,
-
-            // 'uby' => auth()()->name,
+            'domain' => $data['domain'],
+            'service' => $data['service'],
+            'description' => $data['description'],
+            'customer' => $data['customer'] ?? null,
+            'location' => $data['location'] ?? null,
+            'longlat' => $data['longlat'] ?? null,
             'udt' => now(),
         ]);
 
@@ -90,5 +95,18 @@ class ServiceController extends Controller
             'ddt' => now(),
         ]);
         return redirect()->route('service.service')->with('success', 'Service deleted successfully.');
+    }
+
+    public function byDomain(Request $request)
+    {
+        $domainId = $request->input('domain');
+        if (!$domainId) return response()->json([]);
+
+        $list = ServicesModel::where('isdeleted', 0)
+            ->where('domain', $domainId)
+            ->orderBy('service', 'asc')
+            ->get(['id', 'service']);
+
+        return response()->json($list);
     }
 }

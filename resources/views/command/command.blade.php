@@ -356,6 +356,45 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // --- ADD: client-side table search for "Function" (service_command) ---
+  (function () {
+    const searchInput = document.querySelector('input[name="search"]');
+    if (!searchInput) return;
+
+    // build header -> index map
+    const headerMap = {};
+    document.querySelectorAll('table thead th').forEach((th, i) => {
+      const key = (th.textContent || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      headerMap[key] = i;
+    });
+
+    function cellTextByHeader(tr, names) {
+      for (const n of names) {
+        const key = n.toLowerCase();
+        if (key in headerMap) {
+          const idx = headerMap[key];
+          return (tr.children[idx] && tr.children[idx].textContent || '').trim().toLowerCase();
+        }
+      }
+      return '';
+    }
+
+    searchInput.addEventListener('input', function () {
+      const q = this.value.trim().toLowerCase();
+      document.querySelectorAll('tbody.table-border-bottom-0 tr').forEach(tr => {
+        // skip empty / colspan rows
+        if (tr.querySelector('td') && tr.querySelector('td').getAttribute('colspan')) return;
+        const func = cellTextByHeader(tr, ['function', 'service command', 'service_command', 'service_command']);
+        const cmd  = cellTextByHeader(tr, ['command']);
+        const desc = cellTextByHeader(tr, ['description']);
+        const ip   = cellTextByHeader(tr, ['ip']);
+        // match any of these fields
+        const match = [func, cmd, desc, ip].some(s => s.includes(q));
+        tr.style.display = (q === '' || match) ? '' : 'none';
+      });
+    });
+  })();
+  // --- END add ---
 });
 </script>
 @endpush

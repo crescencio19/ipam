@@ -23,7 +23,7 @@
 </nav>
 
 <h4 class="fw-bold py-3 mb-4">
-  {{ $title ?? 'Detail' }}
+ Domain
   @if($entityLabel)
     <small class="text-muted"> — {{ $entityLabel }}</small>
   @endif
@@ -50,7 +50,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-              {{ $title }}
+           Domain
               @if(isset($domain) && !empty($domain->domain))
                 <small class="text-muted"> — {{ $domain->domain }}</small>
               @endif

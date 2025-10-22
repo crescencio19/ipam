@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\DomainModel;
+use App\Models\ServicesModel;
 
 class ServiceModel extends Model
 {
@@ -13,6 +15,7 @@ class ServiceModel extends Model
     public $timestamps = false; // Disable timestamps if not used
 
     protected $fillable = [
+        'domain',
         'service',
         'description',
         'customer',
@@ -27,4 +30,14 @@ class ServiceModel extends Model
         'dby',
         'ddt',
     ];
+    public function domainData()
+    {
+        return $this->belongsTo(DomainModel::class, 'domain');
+    }
+    // each tb_service row stores a service id -> belongsTo the services master table
+    public function servicesData()
+    {
+        // kolom `service` di tb_service menyimpan id dari tabel master services
+        return $this->belongsTo(\App\Models\ServicesModel::class, 'service', 'id');
+    }
 }

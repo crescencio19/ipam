@@ -8,6 +8,10 @@ use App\Http\Controllers\VlanController;
 use App\Http\Controllers\IpController;
 use App\Http\Controllers\CommandController;
 use App\Http\Controllers\GenerateController;
+use App\Http\Controllers\ServicesController;
+use App\Http\Controllers\VlansSerController;
+use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\RackController;
 
 
 // Route::get('/', function () {
@@ -31,9 +35,10 @@ Route::get('/service', [ServiceController::class, 'index'])->name('service.servi
 Route::get('/service/create', [ServiceController::class, 'create'])->name('service.create');
 Route::post('/service/store', [ServiceController::class, 'store'])->name('service.store');
 Route::get('/service/edit/{id}', [ServiceController::class, 'edit'])->name('service.edit');
-Route::post('/service/update/{id}', [ServiceController::class, 'update'])->name('service.update');
+Route::put('/service/update/{id}', [ServiceController::class, 'update'])->name('service.update');
 Route::post('/service/destroy/{id}', [ServiceController::class, 'destroy'])->name('service.destroy');
 
+Route::get('/service/by-domain', [ServiceController::class, 'byDomain'])->name('service.byDomain');
 
 Route::get('/vlan', [VlanController::class, 'index'])->name('vlan.vlan');
 Route::post('/vlan/store', [VlanController::class, 'store'])->name('vlan.store');
@@ -64,6 +69,35 @@ Route::post('/command/store', [CommandController::class, 'store'])->name('comman
 Route::get('/command/edit/{id}', [CommandController::class, 'edit'])->name('command.edit');
 Route::put('/command/update/{id}', [CommandController::class, 'update'])->name('command.update');
 Route::post('/command/destroy/{id}', [CommandController::class, 'destroy'])->name('command.destroy');
-
+Route::get('/services', [ServicesController::class, 'index'])->name('services.services');
+Route::get('/services/create', [ServicesController::class, 'create'])->name('services.create');
+Route::post('/services/store', [ServicesController::class, 'store'])->name('services.store');
+Route::get('/services/edit/{id}', [ServicesController::class, 'edit'])->name('services.edit');
+Route::put('/services/update/{id}', [ServicesController::class, 'update'])->name('services.update');
+Route::post('/services/destroy/{id}', [ServicesController::class, 'destroy'])->name('services.destroy');
 
 Route::get('/generate', [GenerateController::class, 'index'])->name('generate.generate');
+
+Route::get('/vlansser', [VlansSerController::class, 'index'])->name('vlansser.vlansser');
+Route::get('/vlansser/create', [VlansSerController::class, 'create'])->name('vlansser.create');
+Route::post('/vlansser/store', [VlansSerController::class, 'store'])->name('vlansser.store');
+Route::get('/vlansser/edit/{id}', [VlansSerController::class, 'edit'])->name('vlansser.edit');
+Route::put('/vlansser/update/{id}', [VlansSerController::class, 'update'])->name('vlansser.update');
+Route::post('/vlansser/destroy/{id}', [VlansSerController::class, 'destroy'])->name('vlansser.destroy');
+Route::get('/vlansser/by-domain', [VlansSerController::class, 'byDomain'])->name('vlansser.byDomain');
+
+Route::get('/device', [DeviceController::class, 'index'])->name('device.device');
+Route::get('/device/create', [DeviceController::class, 'create'])->name('device.create');
+Route::post('/device/store', [DeviceController::class, 'store'])->name('device.store');
+Route::get('/device/edit/{id}', [DeviceController::class, 'edit'])->name('device.edit');
+Route::put('/device/update/{id}', [DeviceController::class, 'update'])->name('device.update');
+Route::post('/device/destroy/{id}', [DeviceController::class, 'destroy'])->name('device.destroy');
+Route::get('/device/by-domain', [DeviceController::class, 'byDomain'])->name('device.byDomain');
+
+Route::get('/rack', [RackController::class, 'index'])->name('rack.rack');
+Route::get('/rack/create', [RackController::class, 'create'])->name('rack.create');
+Route::post('/rack/store', [RackController::class, 'store'])->name('rack.store');
+Route::get('/rack/edit/{id}', [RackController::class, 'edit'])->name('rack.edit');
+Route::put('/rack/update/{id}', [RackController::class, 'update'])->name('rack.update');
+Route::post('/rack/destroy/{id}', [RackController::class, 'destroy'])->name('rack.destroy');
+Route::get('/rack/by-domain', [RackController::class, 'byDomain'])->name('rack.byDomain');

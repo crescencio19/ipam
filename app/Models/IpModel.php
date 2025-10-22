@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\VlanModel;
 use App\Models\ServiceModel;
+use App\Models\DeviceModel;
+use App\Models\RackModel;
+
 
 class IpModel extends Model
 {
@@ -23,6 +26,10 @@ class IpModel extends Model
         'rack',
         'bandwith',
         'device',
+        'devicecs',
+        'ipcs',
+        'r_number',
+        'b_number',
         'location',
         'isdeleted',
         'remark',
@@ -41,5 +48,13 @@ class IpModel extends Model
     public function VlanData()
     {
         return $this->belongsTo(VlanModel::class, 'vlan');
+    }
+    public function DeviceData()
+    {
+        return $this->belongsTo(DeviceModel::class, 'device');
+    }
+    public function RackData()
+    {
+        return $this->belongsTo(RackModel::class, 'rack');
     }
 }

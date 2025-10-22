@@ -88,7 +88,7 @@
             </li>
             <!-- Data Master -->
             @php
-                $dataMasterActive = Request::routeIs('domain.domain') || Request::routeIs('service.service') || Request::routeIs('vlan.vlan') || Request::routeIs('ip.ip') || Request::routeIs('command.command');
+                $dataMasterActive = Request::routeIs('domain.domain') || Request::routeIs('services.services') || Request::routeIs('service.service') || Request::routeIs('vlan.vlan') || Request::routeIs('ip.ip') || Request::routeIs('command.command') || Request::routeIs('vlansser.vlansser') || Request::routeIs('rack.rack') || Request::routeIs('device.device');
             @endphp
             <li class="menu-item {{ $dataMasterActive ? 'active open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -102,16 +102,40 @@
                             <div data-i18n="Without menu">Domain</div>
                         </a>
                     </li>
+                    <li class="menu-item {{ Request::routeIs('services.services') ? 'active' : '' }}">
+                        <a href="{{ route('services.services') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-cog"></i>
+                            <div data-i18n="Without navbar">Service </div>
+                        </a>
+                    </li>
                     <li class="menu-item {{ Request::routeIs('service.service') ? 'active' : '' }}">
                         <a href="{{ route('service.service') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-cog"></i>
-                            <div data-i18n="Without navbar">Service </div>
+                            <div data-i18n="Without navbar">Customer </div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ Request::routeIs('vlansser.vlansser') ? 'active' : '' }}">
+                        <a href="{{ route('vlansser.vlansser') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-git-branch"></i>
+                            <div data-i18n="Container">Vlanser</div>
                         </a>
                     </li>
                     <li class="menu-item {{ Request::routeIs('vlan.vlan') ? 'active' : '' }}">
                         <a href="{{ route('vlan.vlan') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-git-branch"></i>
                             <div data-i18n="Container">Vlan</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ Request::routeIs('rack.rack') ? 'active' : '' }}">
+                        <a href="{{ route('rack.rack') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-git-branch"></i>
+                            <div data-i18n="Container">Rack</div>
+                        </a>
+                    </li>
+                    <li class="menu-item {{ Request::routeIs('device.device') ? 'active' : '' }}">
+                        <a href="{{ route('device.device') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-git-branch"></i>
+                            <div data-i18n="Container">Device</div>
                         </a>
                     </li>
                     <li class="menu-item {{ Request::routeIs('ip.ip') ? 'active' : '' }}">

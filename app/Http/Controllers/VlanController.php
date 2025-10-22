@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\VlanModel;
 use App\Models\DomainModel;
+use App\Models\VlansSerModel;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
 class VlanController extends Controller
@@ -45,15 +47,29 @@ class VlanController extends Controller
     {
         $request->validate([
             'domain' => 'required',
-            'vlan' => 'required',
             'gateway' => 'required',
             'block_ip' => 'required',
+            'vlansser_id' => ['nullable', Rule::exists((new VlansSerModel)->getTable(), 'id')],
+            // if not using vlansser_id ensure client sends vlan & vlanid (optional fallback)
         ]);
+
+        // default from form (fallback)
+        $vlanid = $request->input('vlanid');
+        $vlan = $request->input('vlan');
+
+        // if user selected a vlans_ser entry, override values
+        if ($request->filled('vlansser_id')) {
+            $vs = VlansSerModel::find($request->input('vlansser_id'));
+            if ($vs) {
+                $vlanid = $vs->vlanid;
+                $vlan = $vs->vlan;
+            }
+        }
 
         VlanModel::create([
             'domain' => $request->domain,
-            'vlan' => $request->vlan,
-            'vlanid' => $request->vlanid,
+            'vlan' => $vlan,
+            'vlanid' => $vlanid,
             'gateway' => $request->gateway,
             'block_ip' => $request->block_ip,
         ]);
@@ -70,17 +86,26 @@ class VlanController extends Controller
     {
         $request->validate([
             'domain' => 'required',
-            'vlan' => 'required',
-            'vlanid' => 'required',
             'gateway' => 'required',
             'block_ip' => 'required',
+            'vlansser_id' => ['nullable', Rule::exists((new VlansSerModel)->getTable(), 'id')],
         ]);
 
-        $vlan = VlanModel::findOrFail($id);
-        $vlan->update([
+        $vlanid = $request->input('vlanid');
+        $vlan = $request->input('vlan');
+        if ($request->filled('vlansser_id')) {
+            $vs = VlansSerModel::find($request->input('vlansser_id'));
+            if ($vs) {
+                $vlanid = $vs->vlanid;
+                $vlan = $vs->vlan;
+            }
+        }
+
+        $vlanModel = VlanModel::findOrFail($id);
+        $vlanModel->update([
             'domain' => $request->domain,
-            'vlan' => $request->vlan,
-            'vlanid' => $request->vlanid,
+            'vlan' => $vlan,
+            'vlanid' => $vlanid,
             'gateway' => $request->gateway,
             'block_ip' => $request->block_ip,
         ]);
