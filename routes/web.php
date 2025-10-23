@@ -22,6 +22,7 @@ use App\Http\Controllers\RackController;
 Route::get('/', [HomeController::class, 'index']);
 
 Route::get('/domain/{id}', [HomeController::class, 'show'])->name('domain.show');
+Route::get('/domain/{id}/export', [HomeController::class, 'export'])->name('domain.export');
 
 Route::get('/search', [DomainController::class, 'search'])->name('search');
 Route::get('/domain', [DomainController::class, 'index'])->name('domain.domain');

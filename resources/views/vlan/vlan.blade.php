@@ -103,11 +103,11 @@
 
           <div class="mb-3">
             <label class="form-label">Block IP</label>
-            <input type="text" name="block_ip" class="form-control" value="{{ $item->block_ip }}" required>
+            <input type="text" name="block_ip" class="form-control block-ip-input" value="{{ $item->block_ip }}" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Gateway</label>
-            <input type="text" name="gateway" class="form-control" value="{{ $item->gateway }}" required>
+            <input type="text" name="gateway" class="form-control gateway-input" value="{{ $item->gateway }}" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -187,11 +187,11 @@
 
                     <div class="mb-3">
                       <label for="block_ip" class="form-label">Block IP</label>
-                      <input type="text" name="block_ip" id="block_ip" class="form-control" placeholder="block ip" required>
+                      <input type="text" name="block_ip" id="block_ip" class="form-control block-ip-input" placeholder="block ip" required>
                     </div>
                     <div class="mb-3">
                       <label for="gateway" class="form-label">Gateway</label>
-                      <input type="text" name="gateway" id="gateway" class="form-control" placeholder="gateway " required>
+                      <input type="text" name="gateway" id="gateway" class="form-control gateway-input" placeholder="gateway " required>
                     </div>
                     </div>
                     <div class="modal-footer">
@@ -281,6 +281,83 @@ document.addEventListener('DOMContentLoaded', function () {
       loadVlansForDomain(domainId, $vsel, currentVal);
     }
   });
+  // -- Gateway auto-generate from Block IP --
+  function ipToInt(ip) {
+    const parts = ip.split('.').map(Number);
+    if (parts.length !== 4 || parts.some(isNaN)) return null;
+    return ((parts[0] << 24) >>> 0) + ((parts[1] << 16) >>> 0) + ((parts[2] << 8) >>> 0) + (parts[3] >>> 0);
+  }
+  function intToIp(int) {
+    return [(int >>> 24) & 0xFF, (int >>> 16) & 0xFF, (int >>> 8) & 0xFF, int & 0xFF].join('.');
+  }
+  function maskFromPrefix(prefix) {
+    return prefix === 0 ? 0 : (~((1 << (32 - prefix)) - 1)) >>> 0;
+  }
+  function computeGatewayFromCidr(ipCidr) {
+    // ipCidr like '192.0.2.0/24' or '192.0.2.0'
+    if (!ipCidr) return null;
+    ipCidr = ipCidr.trim();
+    let ipPart = ipCidr;
+    let prefix = 24; // default
+    if (ipCidr.includes('/')) {
+      const sp = ipCidr.split('/');
+      ipPart = sp[0];
+      prefix = parseInt(sp[1], 10);
+      if (isNaN(prefix) || prefix < 0 || prefix > 32) prefix = 24;
+    }
+    const ipInt = ipToInt(ipPart);
+    if (ipInt === null) return null;
+    const mask = maskFromPrefix(prefix);
+    const network = ipInt & mask;
+    // choose first usable host (network + 1) except when prefix===32 then gateway is ip itself
+    let gwInt = (prefix === 32) ? ipInt : (network + 1);
+    // ensure gwInt is not broadcast for /31 or /32 edge cases
+    return intToIp(gwInt >>> 0);
+  }
+
+  function attachAutoGateway(blockInput, gatewayInput) {
+    if (!blockInput || !gatewayInput) return;
+    const update = function() {
+      const val = blockInput.value;
+      const gw = computeGatewayFromCidr(val);
+      if (gw) gatewayInput.value = gw;
+    };
+    // update on blur and on change
+    blockInput.addEventListener('blur', update);
+    blockInput.addEventListener('change', update);
+    // also try on input (with debounce)
+    let t;
+    blockInput.addEventListener('input', function(){
+      clearTimeout(t);
+      t = setTimeout(update, 600);
+    });
+    // if gateway empty when modal opens, compute
+    const modal = blockInput.closest('.modal');
+    if (modal) {
+      modal.addEventListener('shown.bs.modal', function(){
+        // find inputs inside this modal
+        const bi = modal.querySelector('.block-ip-input');
+        const gi = modal.querySelector('.gateway-input');
+        if (bi && gi && !gi.value) gi.value = computeGatewayFromCidr(bi.value);
+      });
+    } else {
+      // for create (not modal) compute initial
+      if (!gatewayInput.value) gatewayInput.value = computeGatewayFromCidr(blockInput.value);
+    }
+  }
+
+  // attach to create inputs (ids)
+  attachAutoGateway(document.getElementById('block_ip'), document.getElementById('gateway'));
+
+  // attach to each edit modal pair
+  document.querySelectorAll('.edit-vlan-select').forEach(function(){/* ensure selects initialized earlier */});
+  document.querySelectorAll('.block-ip-input').forEach(function(bi){
+    // find gateway input in same modal/row
+    let container = bi.closest('.modal') || bi.closest('tr') || document;
+    const gi = container.querySelector('.gateway-input');
+    attachAutoGateway(bi, gi);
+  });
+
 });
 </script>
 @endpush

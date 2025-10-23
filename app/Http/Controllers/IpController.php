@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use App\Models\IpModel;
 use App\Models\ServiceModel;
@@ -34,11 +35,25 @@ class IpController extends Controller
             ->where('ip.isdeleted', 0);
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('ip.ip', 'like', "%{$search}%")
-                    ->orWhere('ip.device', 'like', "%{$search}%")
-                    ->orWhere('v.vlan', 'like', "%{$search}%")
-                    ->orWhere('srv.service', 'like', "%{$search}%");
+            $like = "%{$search}%";
+            $query->where(function ($q) use ($like) {
+                $q->where('ip.ip', 'like', $like)
+                    ->orWhere('ip.device', 'like', $like)
+                    ->orWhere('ip.devicecs', 'like', $like)
+                    ->orWhere('ip.ipcs', 'like', $like)
+                    ->orWhere('ip.vlanid', 'like', $like)
+                    ->orWhere('v.vlan', 'like', $like)
+                    ->orWhere('ip.rack', 'like', $like)
+                    ->orWhere('ip.bandwith', 'like', $like)
+                    ->orWhere('ip.location', 'like', $like)
+                    ->orWhere('ip.r_number', 'like', $like)
+                    ->orWhere('ip.b_number', 'like', $like)
+                    // cek semua sumber nama service (tb_service, master service, atau ip.service langsung)
+                    ->orWhere('s.service', 'like', $like)
+                    ->orWhere('srv1.service', 'like', $like)
+                    ->orWhere('srv2.service', 'like', $like)
+                    // fallback: COALESCE dari select alias
+                    ->orWhereRaw("COALESCE(srv2.service, srv1.service, s.service, ip.service) LIKE ?", [$like]);
             });
         }
 
@@ -68,6 +83,24 @@ class IpController extends Controller
 
         ]);
 
+
+        $request->validate([
+            'ip' => [
+                'required',
+                'max:45',
+                Rule::unique('tb_ip', 'ip')->where(function ($query) {
+                    $query->where('isdeleted', 0);
+                }),
+            ],
+            'ipcs' => [
+                'nullable',
+                'max:100',
+                Rule::unique('tb_ip', 'ipcs')->where(function ($query) {
+                    $query->where('isdeleted', 0);
+                }),
+            ],
+            // ...add other rules as needed...
+        ]);
 
         IpModel::create([
             'vlan' => $request->input('vlan'),
@@ -105,6 +138,24 @@ class IpController extends Controller
             'ip' => 'required',
             'device' => 'required',
             'service' => 'nullable',
+        ]);
+
+        $request->validate([
+            'ip' => [
+                'required',
+                'max:45',
+                Rule::unique('tb_ip', 'ip')->ignore($id, 'id')->where(function ($query) {
+                    $query->where('isdeleted', 0);
+                }),
+            ],
+            'ipcs' => [
+                'nullable',
+                'max:100',
+                Rule::unique('tb_ip', 'ipcs')->ignore($id, 'id')->where(function ($query) {
+                    $query->where('isdeleted', 0);
+                }),
+            ],
+            // ...add other rules as needed...
         ]);
 
         Log::info('IpController::update payload', array_merge(['id' => $id], $request->all()));

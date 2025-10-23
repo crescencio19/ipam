@@ -85,14 +85,24 @@
                          <td>{{ $item->b_number ?? '-' }}</td>
 
                          <td>
-                             <!-- Tombol Edit -->                        
-                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $item->id }}">
-                                 <i class='bx bx-edit'></i>
-                             </button>
-                            <!-- Tombol Delete -->
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $item->id }}">
+                            @if($hasServiceFinal)
+                              <!-- locked: edit/delete disabled for rows with service -->
+                              <button type="button" class="btn btn-secondary btn-sm" disabled title="Edit disabled for items with service">
+                                <i class='bx bx-edit'></i>
+                              </button>
+                              <button type="button" class="btn btn-secondary btn-sm" disabled title="Delete disabled for items with service">
                                 <i class='bx bx-trash'></i>
-                            </button>
+                              </button>
+                            @else
+                              <!-- Tombol Edit -->                        
+                              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $item->id }}">
+                                <i class='bx bx-edit'></i>
+                              </button>
+                              <!-- Tombol Delete -->
+                              <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $item->id }}">
+                                <i class='bx bx-trash'></i>
+                              </button>
+                            @endif
                         </td>
                     </tr>
 

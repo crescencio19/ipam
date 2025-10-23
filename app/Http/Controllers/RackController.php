@@ -13,13 +13,16 @@ class RackController extends Controller
     {
         $search = $request->input('search');
 
-        // build query (do not ->get() yet) so we can order and paginate on the query builder
-        $query = RackModel::where('isdeleted', 0);
+        // eager load domain relation and build query
+        $query = RackModel::with('domainData')->where('isdeleted', 0);
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('rack', 'like', "%{$search}%")
-                    ->where('domain', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    // search domain name via relation
+                    ->orWhereHas('domainData', function ($q2) use ($search) {
+                        $q2->where('domain', 'like', "%{$search}%")->where('isdeleted', 0);
+                    });
             });
         }
 

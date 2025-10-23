@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\VlanModel;
 use App\Models\DomainModel;
 use App\Models\VlansSerModel;
+use App\Models\IpModel;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
@@ -13,25 +14,38 @@ class VlanController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->input('search');
+        $searchRaw = $request->input('search', '');
+        $search = trim($searchRaw);
 
-        // search across id, vlanid, vlan, gateway, block_ip and related domain name
         $query = VlanModel::where('isdeleted', 0);
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                    ->orWhere('vlanid', 'like', "%{$search}%")
-                    ->orWhere('vlan', 'like', "%{$search}%")
-                    ->orWhere('gateway', 'like', "%{$search}%")
-                    ->orWhere('block_ip', 'like', "%{$search}%")
-                    ->orWhereHas('domainData', function ($q2) use ($search) {
-                        $q2->where('domain', 'like', "%{$search}%")
-                            ->where('isdeleted', 0);
+
+        if ($search !== '') {
+            $likeRaw = '%' . $search . '%';
+            $likeLower = '%' . strtolower($search) . '%';
+
+            // cari di kolom terpisah dan juga dalam satu concatenated field (lebih toleran terhadap format)
+            $query->where(function ($q) use ($likeRaw, $likeLower) {
+                $q->where('vlanid', 'like', $likeRaw)
+                    ->orWhere('vlan', 'like', $likeRaw)
+                    // case-insensitive pencarian untuk gateway / block_ip
+                    ->orWhereRaw('LOWER(gateway) LIKE ?', [$likeLower])
+                    ->orWhereRaw('LOWER(block_ip) LIKE ?', [$likeLower])
+                    // fallback: gabungkan beberapa kolom jadi satu string untuk mencari pola yang mungkin terbagi
+                    ->orWhereRaw("LOWER(CONCAT_WS(' ', IFNULL(vlanid,''), IFNULL(vlan,''), IFNULL(gateway,''), IFNULL(block_ip,''))) LIKE ?", [$likeLower])
+                    ->orWhereHas('domainData', function ($q2) use ($likeLower) {
+                        $q2->whereRaw('LOWER(domain) LIKE ?', [$likeLower])->where('isdeleted', 0);
                     });
             });
         }
 
-        $vlans = $query->orderBy('id', 'asc')->paginate(5)->appends(['search' => $search]);
+        // debug log (hapus/komentari di produksi)
+        \Log::info('VlanController::index search', [
+            'search' => $search,
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+        ]);
+
+        $vlans = $query->orderBy('id', 'asc')->paginate(5)->appends(['search' => $searchRaw]);
         $domains = DomainModel::where('isdeleted', 0)->get();
         $title = 'Vlan';
         return view('vlan.vlan', compact('vlans', 'title', 'domains'));
@@ -174,19 +188,52 @@ class VlanController extends Controller
 
     public function dashboard(Request $request)
     {
-        $search = $request->input('search');
+        $searchRaw = $request->input('search', '');
+        $search = trim($searchRaw);
+        $domainId = $request->input('domain'); // domain filter (nullable)
+
         $query = VlanModel::with('domainData')->where('isdeleted', 0);
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('vlanid', 'like', "%{$search}%")
-                    ->orWhere('vlan', 'like', "%{$search}%");
-            })->orWhereHas('domainData', function ($q) use ($search) {
-                $q->where('domain', 'like', "%{$search}%")->where('isdeleted', 0);
+
+        // filter by domain id if provided
+        if (!empty($domainId)) {
+            $query->where('domain', $domainId);
+        }
+
+        if ($search !== '') {
+            $like = '%' . strtolower($search) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(vlanid) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(vlan) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(block_ip) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(gateway) LIKE ?', [$like]);
+            })->orWhereHas('domainData', function ($q) use ($like) {
+                $q->whereRaw('LOWER(domain) LIKE ?', [$like])->where('isdeleted', 0);
             });
         }
 
-        $vlans = $query->orderBy('vlanid')->paginate(20)->appends(['search' => $search]);
-        $title = ' Vlan Ranges';
-        return view('dasvlan', compact('vlans', 'title', 'search'));
+        $vlans = $query->orderBy('vlanid')->paginate(20)->appends(['search' => $searchRaw, 'domain' => $domainId]);
+        // hanya domain yang punya vlan (aktif)
+        $domainIds = VlanModel::where('isdeleted', 0)
+            ->whereNotNull('domain')
+            ->pluck('domain')
+            ->unique()
+            ->toArray();
+        $domains = DomainModel::whereIn('id', $domainIds)
+            ->where('isdeleted', 0)
+            ->orderBy('domain')
+            ->get();
+
+        // ambil daftar vlan.id yang sudah punya IP (untuk menandai warna)
+        $vlansWithIp = IpModel::where('isdeleted', 0)
+            ->whereNotNull('vlan')
+            ->pluck('vlan')
+            ->unique()
+            ->map(function ($v) {
+                return (int) $v;
+            }) // pastikan integer
+            ->toArray();
+
+        $title = 'Vlan Ranges';
+        return view('dasvlan', compact('vlans', 'title', 'search', 'domains', 'domainId', 'vlansWithIp'));
     }
 }

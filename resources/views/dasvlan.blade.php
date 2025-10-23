@@ -2,10 +2,22 @@
 
 @section('content')
 <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
-  <form action="{{ url()->current() }}" method="GET" class="navbar-nav align-items-center">
-    <div class="nav-item d-flex align-items-center">
-      <i class="bx bx-search fs-4 lh-0"></i>
-      <input type="text" name="search" class="form-control border-0 shadow-none" placeholder="Search" value="{{ request('search') }}" />
+  <form action="{{ url()->current() }}" method="GET" class="w-100 d-flex align-items-center">
+    <div class="d-flex align-items-center flex-grow-1">
+      <i class="bx bx-search fs-4 lh-0 me-2"></i>
+      <input type="text" name="search" class="form-control border-0 shadow-none" placeholder="Search" value="{{ $search ?? request('search') }}" />
+    </div>
+
+    <div class="ms-auto d-flex align-items-center">
+      <select name="domain" class="form-select form-select-sm me-2">
+        <option value="">All Domains</option>
+        @foreach($domains as $d)
+          <option value="{{ $d->id }}" {{ (string)($domainId ?? request('domain')) === (string)$d->id ? 'selected' : '' }}>
+            {{ $d->domain }}
+          </option>
+        @endforeach
+      </select>
+      <button class="btn btn-sm btn-primary">Filter</button>
     </div>
   </form>
 </nav>
@@ -45,18 +57,18 @@
         }
       @endphp
 
-      <div class="card m-2" style="width: 20rem;">
-        <a href="{{ route('vlan.show', $vlan->id) }}" class="text-decoration-none text-reset">
+      @php $hasIp = in_array((int) $vlan->id, $vlansWithIp ?? []); @endphp
+      <div class="card m-2 {{ $hasIp ? 'alert-danger ' : 'alert-success ' }}" style="width: 20rem;">
+        <a href="{{ route('vlan.show', $vlan->id) }}" class="text-decoration-none {{ $hasIp ? 'text-black' : 'text-black' }}">
          <div class="card-body">
            <h5 class="card-title">{{ $vlan->vlanid ?? '-' }} - {{ $vlan->vlan ?? '-' }}</h5>
            <p class="mb-1"><strong>Domain:</strong>
             @if($vlan->domain)
-              <a href="{{ route('domain.show', $vlan->domain) }}">{{ $domainName }}</a>
-          @else
+              <a href="{{ route('domain.show', $vlan->domain) }}" class="{{ $hasIp ? 'text-black' : 'text-black' }}">{{ $domainName }}</a>
+            @else
               {{ $domainName }}
             @endif
           </p>
-          {{-- <p class="mb-1"><strong>IP Range:</strong> {{ $ipRange }}</p> --}}
           <p class="mb-1"><strong>Block IP:</strong> {{ $vlan->block_ip ?? '-' }}</p>
           <p class="mb-0"><strong>Gateway:</strong> {{ $vlan->gateway ?? '-' }}</p>
         </div>

@@ -55,12 +55,21 @@
                 <small class="text-muted"> — {{ $domain->domain }}</small>
               @endif
             </h5>
-            <div>
-              <select id="serviceFilter" class="form-select form-select-sm" style="min-width:200px;">
+            <div class="d-flex align-items-center">
+              <select id="serviceFilter" class="form-select form-select-sm" style="min-width:200px; margin-right:8px;">
                 <option value="all">All IPs</option>
                 <option value="with">With Service</option>
                 <option value="without">Without Service</option>
               </select>
+
+              <!-- Export CSV button -->
+              <a href="{{ route('domain.export', ['id' => $domain->id, 'search' => request('search')]) }}"
+                 id="exportCsvBtn"
+                 data-url="{{ route('domain.export', ['id' => $domain->id, 'search' => request('search')]) }}"
+                 class="btn btn-outline-primary btn-sm"
+                 title="Export CSV (Excel)">
+                <i class="bx bx-download"></i> Export
+              </a>
             </div>
         </div>
         <div class="table-responsive text-nowrap">
@@ -68,63 +77,75 @@
                 <thead>
                     <tr>
                         <th>No</th>
-                        {{-- <th>Domain</th> --}}
                         <th>Device</th>
-                        <th>IP</th>
+                        <th>Device CS</th>
                         <th>Vlan-ID</th>
-                        <th>Vlan Name</th>
-                        <th>Services</th>
+                        <th>Vlan</th>
+                        <th>IP</th>
+                        <th>IP CS</th>
+                        <th>Service</th>
+                        <th>Customer</th>
                         <th>Block IP</th>
                         <th>Gateway</th>
-                        @if(!$isEnterprise)
-                          <th>Rack Server</th>
-                          <th>Location</th>
-                        @endif
-                        @if($isEnterprise)
-                          <th>Customer</th>
-                          <th>Bandwidth</th>
-                          <th>Longlat</th>
-                          <th>Location Customer</th>
-                        @endif
+                        <th>Location (Customer)</th>
+                        <th>Longlat</th>
+                        <th>Rack</th>
+                        <th>Bandwith</th>
+                        <th>Location</th>
+                        <th>R Number</th>
+                        <th>B Number</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
                     @forelse ($data as $row)
                         @php
-                            $serviceLabel = $row->service_name ?? $row->Service ?? null;
-                            $hasService = !empty($serviceLabel);
+                            $device = $row->device ?? $row->Device ?? '-';
+                            $devicecs = $row->devicecs ?? $row->DeviceCS ?? '-';
+                            $vlanid = $row->vlanid ?? $row->VLANID ?? '-';
+                            $vlanname = $row->vlan_name ?? $row->VLANNAME ?? $row->vlan ?? '-';
+                            $ip = $row->ip ?? $row->IP ?? '-';
+                            $ipcs = $row->ipcs ?? $row->IPCS ?? '-';
+                            $serviceLabel = $row->service_name ?? $row->Service ?? $row->service ?? '-';
+                            $customer = $row->customer ?? $row->nama_customer ?? '-';
+                            $block_ip = $row->block_ip ?? $row->BlockIP ?? '-';
+                            $gateway = $row->gateway ?? $row->Gateway ?? '-';
+                            $service_location = $row->service_location ?? $row->serviceLocation ?? $row->location_customer ?? '-';
+                            $longlat = $row->longlat ?? $row->long_lat ?? '-';
+                            $rack = $row->rack ?? $row->Rack ?? '-';
+                            $bandwith = $row->bandwith ?? $row->bandwidth ?? $row->Bandwith ?? '-';
+                            $location = $row->location ?? $row->Lokasi ?? $row->ip_location ?? '-';
+                            $r_number = $row->r_number ?? $row->RNumber ?? '-';
+                            $b_number = $row->b_number ?? $row->BNumber ?? '-';
+                            $hasService = !empty(trim((string)$serviceLabel)) && $serviceLabel !== '-';
                             $rowClass = $hasService ? 'table-danger' : 'table-success';
                         @endphp
                         <tr class="{{ $rowClass }}" data-has-service="{{ $hasService ? '1' : '0' }}">
                             <td>{{ (isset($data) && method_exists($data, 'currentPage')) ? (($data->currentPage() - 1) * $data->perPage() + $loop->iteration) : $loop->iteration }}</td>
-                            
-                            <td>{{ $row->device ?? $row->Device ?? '-' }}</td>
-                            <td>{{ $row->ip ?? $row->IP ?? '-' }}</td>
-                            <td>{{ $row->vlanid ?? $row->VLANID ?? '-' }}</td>
-                            <td>{{ $row->vlan_name ?? $row->VLANNAME ?? $row->vlan ?? '-' }}</td>
-                            <td>{{ $serviceLabel ?? '-' }}</td>
-                            <td>{{ $row->block_ip ?? $row->BlockIP ?? '-' }}</td>
-                            <td>{{ $row->gateway ?? $row->Gateway ?? '-' }}</td>
-                            @if(!$isEnterprise)
-                              <td>{{ $row->rack ?? $row->Rack ?? '-' }}</td>
-                              <td>{{ $row->location ?? $row->Lokasi ?? $row->Location ?? '-' }}</td>
-                            @endif
-
-                            @if($isEnterprise)
-                              <td>{{ $row->customer ?? $row->nama_customer ?? $row->NamaCustomer ?? '-' }}</td>
-                              <td>{{ $row->bandwith ?? $row->bandwidth ?? $row->Bandwith ?? '-' }}</td>
-                              <td>{{ $row->longlat ?? $row->long_lat ?? $row->Longlat ?? '-' }}</td>
-                              {{-- Location Customer: ambil dari tabel service --}}
-                              <td>{{ $row->service_location ?? $row->serviceLocation ?? '-' }}</td>
-                            @endif
+                            <td>{{ $device }}</td>
+                            <td>{{ $devicecs }}</td>
+                            <td>{{ $vlanid }}</td>
+                            <td>{{ $vlanname }}</td>
+                            <td>{{ $ip }}</td>
+                            <td>{{ $ipcs }}</td>
+                            <td>{{ $serviceLabel }}</td>
+                            <td>{{ $customer }}</td>
+                            <td>{{ $block_ip }}</td>
+                            <td>{{ $gateway }}</td>
+                            <td>{{ $service_location }}</td>
+                            <td>{{ $longlat }}</td>
+                            <td>{{ $rack }}</td>
+                            <td>{{ $bandwith }}</td>
+                            <td>{{ $location }}</td>
+                            <td>{{ $r_number }}</td>
+                            <td>{{ $b_number }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $colCount }}" class="text-center">There is no IP data for this domain.</td>
+                            <td colspan="18" class="text-center">There is no IP data for this domain.</td>
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+             </table>
 
             <div class="mt-3 d-flex justify-content-end">
                 @if(isset($data) && method_exists($data, 'links'))
@@ -195,6 +216,41 @@ document.addEventListener('DOMContentLoaded', function () {
         const match = hay.some(s => s.includes(q));
         tr.style.display = match ? '' : 'none';
       });
+    });
+  }
+
+  // Export tanpa reload
+  const exportBtn = document.getElementById('exportCsvBtn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const url = this.dataset.url;
+      if (!url) return;
+      // fetch stream as blob and trigger download
+      fetch(url, { credentials: 'same-origin' })
+        .then(response => {
+          if (!response.ok) throw new Error('Export failed');
+          const disp = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
+          return response.blob().then(blob => ({ blob, disp }));
+        })
+        .then(({ blob, disp }) => {
+          let filename = 'export.csv';
+          const m = disp.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (m && m[1]) filename = m[1].replace(/['"]/g, '');
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(blobUrl);
+        })
+        .catch(err => {
+          console.error(err);
+          // fallback: lakukan navigasi normal kalau fetch gagal
+          window.location = url;
+        });
     });
   }
 });

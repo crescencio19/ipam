@@ -47,7 +47,7 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                        
-                        <td>{{ $item->domainData->domain }}</td>
+                        <td>{{ $item->domainData->domain ?? '-' }}</td>
 
                          <td>{{$item->rack}}</td>
                          <td>{{$item->description}}</td>

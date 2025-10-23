@@ -14,23 +14,32 @@ class ServiceController extends Controller
     {
         $search = $request->input('search');
 
-        // search across id, service, description, customer, location, longlat
-        $query = ServiceModel::where('isdeleted', 0);
+        // eager load relations and allow searching by related domain/service names
+        $query = ServiceModel::with(['domainData', 'servicesData'])
+            ->where('isdeleted', 0);
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('id', 'like', "%{$search}%")
-                    ->orWhere('service', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('customer', 'like', "%{$search}%")
                     ->orWhere('location', 'like', "%{$search}%")
-                    ->orWhere('longlat', 'like', "%{$search}%");
+                    ->orWhere('longlat', 'like', "%{$search}%")
+                    // search domain name (DomainModel->domain)
+                    ->orWhereHas('domainData', function ($q2) use ($search) {
+                        $q2->where('domain', 'like', "%{$search}%");
+                    })
+                    // search master service name (ServicesModel->service)
+                    ->orWhereHas('servicesData', function ($q2) use ($search) {
+                        $q2->where('service', 'like', "%{$search}%");
+                    });
             });
         }
 
         $service = ServicesModel::where('isdeleted', 0)->get();
         $domains = DomainModel::where('isdeleted', 0)->get();
         $services = $query->orderBy('id', 'asc')->paginate(5)->appends(['search' => $search]);
-        $title = 'Service';
+        $title = 'Customer';
         return view('service.service', compact('services', 'title', 'search', 'domains', 'service'));
     }
 
