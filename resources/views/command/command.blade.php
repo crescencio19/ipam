@@ -119,8 +119,8 @@
         </div>
       </div>
     </form>
+    </div>
   </div>
-</div>
 
                   <!-- Modal Delete Service (optional, jika ingin dinamis juga) -->
                     <div class="modal fade" id="deleteModal{{ $item->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $item->id }}" aria-hidden="true">

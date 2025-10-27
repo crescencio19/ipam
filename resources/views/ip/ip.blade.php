@@ -2,6 +2,46 @@
 @section('search-action', route('ip.ip'))
 
 @section('content')
+  {{-- Validation / error toast --}}
+  @if ($errors->any() || session('error'))
+    <div class="position-fixed top-0 end-0 p-3" style="z-index:1080;">
+      <div id="errorToast" class="bs-toast toast fade show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header bg-danger text-white">
+          <i class="bx bx-error me-2"></i>
+          <div class="me-auto fw-semibold">Error</div>
+          <small class="text-white-50">Now</small>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body bg-white text-danger">
+          @if(session('error'))
+            {{ session('error') }}
+          @else
+            {{-- tampilkan pesan pertama --}}
+            {{ $errors->first() }}
+            {{-- jika mau semua pesan, uncomment berikut:
+            <ul class="mb-0">
+              @foreach($errors->all() as $err)
+                <li>{{ $err }}</li>
+              @endforeach
+            </ul>
+            --}}
+          @endif
+        </div>
+      </div>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('errorToast');
+        if (el) {
+          try {
+            const t = new bootstrap.Toast(el, { autohide: true, delay: 5000 });
+            t.show();
+          } catch (e) { console.warn(e); }
+        }
+      });
+    </script>
+  @endif
+  
 <nav
   class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme"
   id="layout-navbar"
@@ -358,35 +398,27 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // init select2 for create modal selects
+  // init select2 for create modal selects (if select2 tersedia)
   if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
     $('#create_vlan').select2({ width: '100%', dropdownParent: $('#basicModal'), placeholder: 'Select VLAN', allowClear: true });
     $('#create_service').select2({ width: '100%', dropdownParent: $('#basicModal'), placeholder: 'Select service', allowClear: true });
-    // device / devicecs / rack select2 init for create modal
     $('#create_device').select2({ width: '100%', dropdownParent: $('#basicModal'), placeholder: 'Select device', allowClear: true });
     $('#create_devicecs').select2({ width: '100%', dropdownParent: $('#basicModal'), placeholder: 'Select devicecs', allowClear: true });
     $('#create_rack').select2({ width: '100%', dropdownParent: $('#basicModal'), placeholder: 'Select rack', allowClear: true });
   }
 
-  // init edit modal selects for device/devicecs/rack
-  $('.edit-device-select').each(function(){
-    const $d = $(this);
-    const $modal = $d.closest('.modal');
-    $d.select2({ width: '100%', dropdownParent: $modal, placeholder: 'Select device', allowClear: true });
-  });
-  $('.edit-devicecs-select').each(function(){
-    const $d = $(this);
-    const $modal = $d.closest('.modal');
-    $d.select2({ width: '100%', dropdownParent: $modal, placeholder: 'Select devicecs', allowClear: true });
-  });
-  $('.edit-rack-select').each(function(){
-    const $r = $(this);
-    const $modal = $r.closest('.modal');
-    $r.select2({ width: '100%', dropdownParent: $modal, placeholder: 'Select rack', allowClear: true });
+  // init edit modal select2 instances
+  $('.edit-device-select, .edit-devicecs-select, .edit-rack-select').each(function(){
+    const $el = $(this);
+    const $modal = $el.closest('.modal');
+    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+      $el.select2({ width: '100%', dropdownParent: $modal, placeholder: 'Select', allowClear: true });
+    }
   });
 
   function loadServicesForDomain(domainId, $serviceSelect, selectedValue = null) {
-    $serviceSelect.prop('disabled', true).empty().append($('<option>',{ value:'', text: 'Loading...' })).trigger('change.select2');
+    if (!$serviceSelect || !$serviceSelect.length) return;
+    $serviceSelect.prop('disabled', true).empty().append($('<option>',{ value:'', text: 'Loading...' }));
     if (!domainId) {
       $serviceSelect.empty().append($('<option>',{ value:'', text: 'Select' })).trigger('change.select2').prop('disabled', false);
       return;
@@ -410,52 +442,22 @@ document.addEventListener('DOMContentLoaded', function () {
       .always(function(){ $serviceSelect.prop('disabled', false); });
   }
 
-  // when create VLAN changed -> read domain from selected option then load services
-  $('#create_vlan').on('change', function () {
-    const domain = $(this).find(':selected').data('domain') || '';
-    loadServicesForDomain(domain, $('#create_service'));
-    loadDevicesAndRackForDomain(domain, $('#basicModal'));
-    // also fill hidden vlanid input if you have one
-    $('#create_vlanid').val($(this).find(':selected').data('vlanid') || '');
-  });
-
-  // generic: for edit modals, handle per-modal selects
-  $(document).on('change', '.ip-vlan-select', function () {
-    const $sel = $(this);
-    const $modal = $sel.closest('.modal');
-    const domain = $sel.find(':selected').data('domain') || '';
-    const $serviceSelect = $modal.find('.ip-service-select');
-    loadServicesForDomain(domain, $serviceSelect);
-    loadDevicesAndRackForDomain(domain, $modal);
-    // update vlanid hidden for the row if present
-    const id = $sel.data('item') || $sel.attr('id')?.replace('vlan_','');
-    if (id) {
-      $('#vlanid_' + id).val($sel.find(':selected').data('vlanid') || '');
-    }
-  });
-
-  // when edit modal opens, preload services/devices/racks based on current vlan selection
-  $(document).on('shown.bs.modal', '.modal', function () {
-    const $modal = $(this);
-    const $vsel = $modal.find('.ip-vlan-select');
-    const $s = $modal.find('.ip-service-select');
-    if ($vsel.length && $s.length) {
-      const domain = $vsel.find(':selected').data('domain') || '';
-      loadServicesForDomain(domain, $s, $s.data('selected') || null);
-      loadDevicesAndRackForDomain(domain, $modal);
-    }
-  });
-
-  // add loaders for device / devicecs / rack
   function loadDevicesAndRackForDomain(domainId, $root) {
+    if (!$root) $root = $(document);
     if (!domainId) {
-      $root.find('.ip-device-select, .create-device-select, .edit-device-select').each(function(){ $(this).empty().append($('<option>',{value:'', text:'Select device'})).trigger('change'); });
-      $root.find('.create-devicecs-select, .edit-devicecs-select').each(function(){ $(this).empty().append($('<option>',{value:'', text:'Select devicecs'})).trigger('change'); });
-      $root.find('.create-rack-select, .edit-rack-select').each(function(){ $(this).empty().append($('<option>',{value:'', text:'Select rack'})).trigger('change'); });
+      $root.find('.ip-device-select, .create-device-select, .edit-device-select').each(function(){
+        $(this).empty().append($('<option>',{value:'', text:'Select device'})).trigger('change');
+      });
+      $root.find('.create-devicecs-select, .edit-devicecs-select').each(function(){
+        $(this).empty().append($('<option>',{value:'', text:'Select devicecs'})).trigger('change');
+      });
+      $root.find('.create-rack-select, .edit-rack-select').each(function(){
+        $(this).empty().append($('<option>',{value:'', text:'Select rack'})).trigger('change');
+      });
       return;
     }
 
-    // device endpoint
+    // devices
     $.getJSON("{{ route('device.byDomain') }}", { domain: domainId })
       .done(function(data){
         $root.find('.ip-device-select, .create-device-select, .edit-device-select').each(function(){
@@ -472,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (selected) $sel.val(selected).trigger('change');
           else $sel.trigger('change');
         });
-        // devicecs: gunakan kolom device juga (sama sumber)
+
         $root.find('.create-devicecs-select, .edit-devicecs-select').each(function(){
           const $sel = $(this);
           const selected = $sel.data('selected') || $sel.attr('data-selected') || '';
@@ -489,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       }).fail(function(){ console.warn('device.by-domain missing'); });
 
-    // rack endpoint
+    // racks
     $.getJSON("{{ route('rack.byDomain') }}", { domain: domainId })
       .done(function(data){
         $root.find('.create-rack-select, .edit-rack-select').each(function(){
@@ -509,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }).fail(function(){ console.warn('rack.by-domain missing'); });
   }
 
-  // extend existing vlan change handler to also load devices/rack
+  // create modal handlers
   $('#create_vlan').on('change', function () {
     const domain = $(this).find(':selected').data('domain') || '';
     loadServicesForDomain(domain, $('#create_service'));
@@ -517,6 +519,7 @@ document.addEventListener('DOMContentLoaded', function () {
     $('#create_vlanid').val($(this).find(':selected').data('vlanid') || '');
   });
 
+  // generic edit select handler (per-modal)
   $(document).on('change', '.ip-vlan-select', function () {
     const $sel = $(this);
     const $modal = $sel.closest('.modal');
@@ -528,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (id) { $('#vlanid_' + id).val($sel.find(':selected').data('vlanid') || ''); }
   });
 
-  // when edit modal opens, preload services/devices/racks based on current vlan selection
+  // when edit modal opens, preload services/devices/racks
   $(document).on('shown.bs.modal', '.modal', function () {
     const $modal = $(this);
     const $vsel = $modal.find('.ip-vlan-select');
@@ -543,4 +546,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+
 @endsection
