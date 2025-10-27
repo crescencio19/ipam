@@ -104,13 +104,13 @@
       
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Update</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
         </div>
-      </div>
-    </form>
-  </div>
-</div>
+      </form>
+    </div>
+    </div>
                     <!-- Modal Delete Service (optional, jika ingin dinamis juga) -->
                     <div class="modal fade" id="deleteModal{{ $item->id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ $item->id }}" aria-hidden="true">
                         <div class="modal-dialog">
@@ -141,35 +141,33 @@
                     @endforeach
                 </tbody>
             </table>
-    <div class="col d-flex justify-content-end">
+<div class="col d-flex justify-content-end">
         {{ $racks->links('pagination::bootstrap-5') }}
-    </div>
+</div>
 
         </div>
-    </div>
+</div>
     <!--/ Basic Bootstrap Table -->
 
     <!-- Modal Add Service -->
-    <div class="modal fade" id="basicModal" tabindex="-1" aria-labelledby="basicModalLabel" aria-hidden="true">
+<div class="modal fade" id="basicModal" tabindex="-1" aria-labelledby="basicModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form action="{{ route('rack.store') }}" method="POST">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="basicModalLabel">New Vlan</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="basicModalLabel">New Rack</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                   
                     <div class="modal-body">
-                        <div class="mb-3">
-                        <label for="domain" class="form-label">Domain</label>
-                         <select class="form-select"  name="domain" id="domain" aria-label="Default select example">
-                          <option selected="">Select Domain</option>
-                         
-                            @foreach($domains as $domain)
-                                <option value="{{ $domain->id}}">{{ $domain->domain }}</option>
-                            @endforeach
-                        </select>
+                    <div class="mb-3">
+                    <label for="domain" class="form-label">Domain</label>
+                    <select class="form-select"  name="domain" id="domain" aria-label="Default select example">
+                    <option selected="">Select Domain</option>
+                    @foreach($domains as $domain)
+                    <option value="{{ $domain->id}}">{{ $domain->domain }}</option>
+                    @endforeach
+                    </select>
                     </div>
                     <div class="mb-3">
                             <label for="vlanid" class="form-label">Rack</label>

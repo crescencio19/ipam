@@ -28,7 +28,7 @@ class RackController extends Controller
 
         $racks = $query->orderBy('rack', 'asc')->paginate(5)->appends(['search' => $search]);
         $domains = DomainModel::where('isdeleted', 0)->get();
-        $title = 'Racks';
+        $title = 'Rack';
         return view('rack.rack', compact('racks', 'domains', 'title'));
     }
     public function create()

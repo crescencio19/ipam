@@ -31,21 +31,21 @@
                             </button>
         </div>
         <div class="table-responsive text-nowrap">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Domain</th>
-                        <th>Vlan Id</th>
-                        <th>Vlan</th>
-                        <th>Description</th>
-                      
-                        {{-- <th>Actions</th> --}}
-                    </tr>
-                </thead>
-                <tbody class="table-border-bottom-0">
-                    @foreach ($vlans as $item) 
-                    <tr>
+            <div id="vlans-table-container">
+              <table class="table">
+                 <thead>
+                     <tr>
+                         <th>No</th>
+                         <th>Domain</th>
+                         <th>Vlan Id</th>
+                         <th>Vlan</th>
+                         <th>Description</th>
+                       {{-- <th>Actions</th> --}}
+                     </tr>
+                 </thead>
+                 <tbody class="table-border-bottom-0">
+                     @foreach ($vlans as $item) 
+                     <tr>
                         <td>{{ $loop->iteration }}</td>
                        
                         <td>{{ $item->domainData->domain }}</td>
@@ -57,11 +57,11 @@
                         <td>
                             <!-- Tombol Edit -->
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ $item->id }}">
-                                <i class='bx bx-edit'></i>
+                            <i class='bx bx-edit'></i>
                             </button>
                             <!-- Tombol Delete -->
                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $item->id }}">
-                                <i class='bx bx-trash'></i>
+                            <i class='bx bx-trash'></i>
                             </button>
                         </td>
                     </tr>
@@ -79,17 +79,16 @@
         </div>
         <div class="modal-body">
               <div class="mb-3">
-                        <label for="domain" class="form-label">Domain</label>
-                         <select class="form-select"  name="domain" id="domain" aria-label="Default select example">
-                          <option selected="">Select Domain</option>
-                         
-                            @foreach ($domains as $domain)
-                <option value="{{ $domain->id }}" {{ $item->domain == $domain->id ? 'selected' : '' }}>
-                  {{ $domain->domain }}
-                </option>
+              <label for="domain" class="form-label">Domain</label>
+              <select class="form-select"  name="domain" id="domain" aria-label="Default select example">
+              <option selected="">Select Domain</option>
+              @foreach ($domains as $domain)
+              <option value="{{ $domain->id }}" {{ $item->domain == $domain->id ? 'selected' : '' }}>
+              {{ $domain->domain }}
+              </option>
               @endforeach
-                        </select>
-                    </div>
+              </select>
+              </div>
          
 
           <div class="mb-3">
@@ -145,13 +144,14 @@
                     </div>
                     @endforeach
                 </tbody>
-            </table>
-    <div class="col d-flex justify-content-end">
+              </table>
+            </div>
+    <div id="vlans-pagination" class="col d-flex justify-content-end">
         {{ $vlans->links('pagination::bootstrap-5') }}
     </div>
-
-        </div>
-    </div>
+ 
+         </div>
+     </div>
     <!--/ Basic Bootstrap Table -->
 
     <!-- Modal Add Service -->
@@ -202,4 +202,55 @@
     </div>
 
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const tableContainer = document.getElementById('vlans-table-container');
+  const paginationContainer = document.getElementById('vlans-pagination');
+
+  if (!paginationContainer) return;
+
+  function ajaxLoad(url, push = true) {
+    fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(resp => {
+        if (!resp.ok) throw new Error('Network response was not ok');
+        return resp.text();
+      })
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const newTable = doc.getElementById('vlans-table-container');
+        const newPagination = doc.getElementById('vlans-pagination');
+
+        if (newTable && tableContainer) tableContainer.innerHTML = newTable.innerHTML;
+        if (newPagination && paginationContainer) paginationContainer.innerHTML = newPagination.innerHTML;
+
+        // re-bind history
+        if (push) history.pushState({ url: url }, '', url);
+        // scroll to top of table
+        tableContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(err => {
+        console.error('AJAX pagination error', err);
+        // fallback: full navigation
+        window.location = url;
+      });
+  }
+
+  // delegate clicks on pagination links
+  paginationContainer.addEventListener('click', function (e) {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (!href || href === '#') return;
+    e.preventDefault();
+    ajaxLoad(href, true);
+  });
+
+  // handle browser back/forward
+  window.addEventListener('popstate', function (e) {
+    const url = document.location.href;
+    ajaxLoad(url, false);
+  });
+});
+</script>
 @endsection

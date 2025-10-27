@@ -41,13 +41,13 @@ class HomeController extends Controller
                 ->where('domain', 'like', "%{$search}%")
                 ->get();
         } else {
-            $domains = DomainModel::where('isdeleted', 0)->get();
+        $domains = DomainModel::where('isdeleted', 0)->get();
         }
 
         foreach ($domains as $domain) {
             $domain->vlan_count = VlanModel::where('domain', $domain->id)->where('isdeleted', 0)->count();
             $domain->ip_count = IpModel::whereHas('VlanData', function ($q) use ($domain) {
-                $q->where('domain', $domain->id);
+            $q->where('domain', $domain->id);
             })->where('isdeleted', 0)->count();
         }
         return view('index', compact('domains'));

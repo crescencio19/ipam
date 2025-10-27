@@ -10,6 +10,7 @@ use App\Models\IpModel;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
+
 class VlanController extends Controller
 {
     public function index(Request $request)
@@ -123,7 +124,6 @@ class VlanController extends Controller
             'gateway' => $request->gateway,
             'block_ip' => $request->block_ip,
         ]);
-
         return redirect()->route('vlan.vlan')->with('success', 'VLAN updated successfully.');
     }
 

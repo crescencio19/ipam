@@ -110,13 +110,13 @@
                     </li>
                     <li class="menu-item {{ Request::routeIs('service.service') ? 'active' : '' }}">
                         <a href="{{ route('service.service') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-cog"></i>
+                            <i class="menu-icon tf-icons bx bx-user"></i>
                             <div data-i18n="Without navbar">Customer </div>
                         </a>
                     </li>
                     <li class="menu-item {{ Request::routeIs('vlansser.vlansser') ? 'active' : '' }}">
                         <a href="{{ route('vlansser.vlansser') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-git-branch"></i>
+                            <i class="menu-icon tf-icons bx bx-share"></i>
                             <div data-i18n="Container">Vlanser</div>
                         </a>
                     </li>
@@ -128,13 +128,14 @@
                     </li>
                     <li class="menu-item {{ Request::routeIs('rack.rack') ? 'active' : '' }}">
                         <a href="{{ route('rack.rack') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-git-branch"></i>
+                            <i class="menu-icon tf-icons bx bx-box"></i>
                             <div data-i18n="Container">Rack</div>
                         </a>
                     </li>
                     <li class="menu-item {{ Request::routeIs('device.device') ? 'active' : '' }}">
                         <a href="{{ route('device.device') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-git-branch"></i>
+                          
+                            <i class="menu-icon tf-icons bx bx-laptop"></i>
                             <div data-i18n="Container">Device</div>
                         </a>
                     </li>
